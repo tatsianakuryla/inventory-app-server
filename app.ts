@@ -3,19 +3,16 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import type { ErrorRequestHandler  } from "express";
+import { ALLOWED_ORIGINS } from "./shared/constants.ts";
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const allowedOrigins = [
-    'http://localhost:5173',
-    'https://site--inventory-app--sm9fnltkyqvh.code.run'
-];
-
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
@@ -36,6 +33,14 @@ app.get('/', (request, response) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+const errorHandler: ErrorRequestHandler = (error, request, response, next) => {
+    if (response.headersSent) return next(error);
+    const { status = 500, message = "Server error" } = error;
+    console.error(error);
+    return response.status(status).json({ error: message });
+};
+app.use(errorHandler);
 
 process.on('SIGINT', async () => {
     console.log('Shutting down...');
