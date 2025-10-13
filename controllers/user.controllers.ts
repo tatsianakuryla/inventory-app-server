@@ -1,10 +1,23 @@
 import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { Hash } from '../security/Hash.ts'
-import type {LoginRequestBody, LoginResponseBody, RegisterBody, RegisterResponseBody} from "./types.ts";
+import type {LoginRequestBody, LoginResponseBody, RegisterBody, RegisterResponseBody, UsersQuery} from "./types.ts";
 import { isError, isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
 
 export class UserControllers {
+
+  static getUsers = async (request: Request, response: Response) => {
+    try {
+      const { sortBy = 'createdAt', order = 'desc' } = response.locals.query;
+      const users = await prisma.user.findMany({
+        select: { name: true, email: true, role: true, id: true, createdAt: true, updatedAt: true, version: true, isBlocked: true, language: true, theme: true },
+        orderBy: { [sortBy]: order }
+      });
+      response.json(users);
+    } catch (error) {
+      this.handleError(error,  response);
+    }
+  }
 
   public static register = async (request: Request<{}, RegisterResponseBody, RegisterBody>, response: Response<RegisterResponseBody>) => {
     try {
@@ -68,9 +81,13 @@ export class UserControllers {
       };
       return response.status(200).json(safe);
     } catch (error) {
-      if (isError(error)) {
-        return response.status(500).json({ error: error.message });
-      }
+      this.handleError(error, response);
+    }
+  }
+
+  private static handleError(error: unknown, response: Response) {
+    if (isError(error)) {
+      return response.status(500).json({ error: error.message });
     }
   }
 }

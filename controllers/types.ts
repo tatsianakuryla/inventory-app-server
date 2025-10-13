@@ -45,3 +45,12 @@ export const LoginResponseBodySchema = z.object({
 });
 
 export type LoginResponseBody = z.infer<typeof LoginResponseBodySchema> | { error: string };
+
+export const UsersQuerySchema = z.object({
+    sortBy: z.enum([
+        "name","email","role","isBlocked","createdAt","updatedAt"
+    ]).default("createdAt"),
+    order: z.enum(["asc","desc"]).default("desc"),
+});
+
+export type UsersQuery = z.infer<typeof UsersQuerySchema>;
