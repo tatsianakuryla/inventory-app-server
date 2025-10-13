@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { Hash } from '../security/Hash.ts'
-import type { RegisterBody, RegisterResponseBody } from "./types.ts";
+import type {LoginRequestBody, LoginResponseBody, RegisterBody, RegisterResponseBody} from "./types.ts";
 import { isError, isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
 
 export class UserControllers {
@@ -48,5 +48,29 @@ export class UserControllers {
     }
     if (isError(error)) return response.status(500).json({error: error.message})
     else return response.status(500).json({ error: 'Internal Server Error' });
+  }
+
+  public static login = async (request: Request<{}, LoginResponseBody, LoginRequestBody>, response: Response<LoginResponseBody>) => {
+    try {
+      const { email, password } = request.body;
+      const user = await prisma.user.findUnique({
+        where: { email: email.trim().toLowerCase() }
+      });
+      if (!user) return response.status(401).json({ error: 'Invalid email or password' });
+      if (user.isBlocked) return response.status(403).json({ error: "The user is blocked" });
+      const isPasswordValid = await Hash.verifyPassword(password, user.password);
+      if (!isPasswordValid) return response.status(401).json({ error: 'Invalid email or password' });
+      const { password: _omit, createdAt, updatedAt, ...rest } = user;
+      const safe = {
+        ...rest,
+        createdAt: createdAt.toISOString(),
+        updatedAt: updatedAt.toISOString(),
+      };
+      return response.status(200).json(safe);
+    } catch (error) {
+      if (isError(error)) {
+        return response.status(500).json({ error: error.message });
+      }
+    }
   }
 }

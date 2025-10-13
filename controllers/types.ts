@@ -23,3 +23,25 @@ export const RegisterResponseBodySchema = z.object({
 });
 
 export type RegisterResponseBody = z.infer<typeof RegisterResponseBodySchema> | { error: string };
+
+export const LoginRequestBodySchema = z.object({
+    email: z.string().toLowerCase().trim().email("Invalid email"),
+    password: z.string().trim(),
+});
+
+export type LoginRequestBody = z.infer<typeof LoginRequestBodySchema>;
+
+export const LoginResponseBodySchema = z.object({
+    id: z.string(),
+    email: z.string().email(),
+    name: z.string(),
+    role: z.nativeEnum(Role),
+    isBlocked: z.boolean(),
+    language: z.nativeEnum(Language),
+    theme: z.nativeEnum(Theme),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+    version: z.number(),
+});
+
+export type LoginResponseBody = z.infer<typeof LoginResponseBodySchema> | { error: string };
