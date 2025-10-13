@@ -8,18 +8,50 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String?
-  email     String?  @unique
+  id        String    @id @default(cuid())
+  name      String
+  email     String    @unique
   image     String?
-  role      Role     @default(USER)
-  isBlocked Boolean  @default(false)
-  language  String   @default("en")
-  theme     String   @default("light")
-  createdAt DateTime @default(now())
+  role      Role      @default(USER)
+  isBlocked Boolean   @default(false)
+  language  Language  @default(EN)
+  theme     Theme     @default(LIGHT)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  version   Int       @default(1)
+  Account   Account[]
+
+  @@index([name])
+  @@index([email])
+  @@index([role])
+  @@index([isBlocked])
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+enum Language {
+  EN
+  RU
+}
+
+enum Theme {
+  LIGHT
+  DARK
+}
+
+model Account {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  accessToken       String?
+  refreshToken      String?
+  expiresAt         DateTime?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
