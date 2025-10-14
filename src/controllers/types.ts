@@ -65,3 +65,12 @@ export const AutocompleteQuerySchema = z.object({
 });
 
 export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
+
+export const PayloadSchema = z.object({
+    sub: z.string().min(1),
+    email: z.string().email(),
+    role: z.enum(["USER", "ADMIN"]),
+    status: z.enum(["ACTIVE", "BLOCKED"]),
+});
+
+export type AppJwtPayload = z.infer<typeof PayloadSchema>;

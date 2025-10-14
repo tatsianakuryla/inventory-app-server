@@ -2,6 +2,7 @@ import { UNIQUE_VALUE_ERROR_CODE } from "../constants.ts";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import type { RoleFromEnum, StatusFromEnum } from "../types/types.js";
+import type {SignOptions} from "jsonwebtoken";
 
 function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError;
@@ -28,3 +29,9 @@ export const toStatus = (status: string): StatusFromEnum | null => {
   const userStatus = status.toUpperCase();
   return (userStatus === "BLOCKED" || userStatus === "ACTIVE") ? userStatus : null;
 };
+
+type ExpiresIn = NonNullable<SignOptions["expiresIn"]>;
+
+export const toExpiresIn = (value: string | number | undefined, fallback: ExpiresIn): ExpiresIn => {
+  return (value ?? fallback) as ExpiresIn;
+}

@@ -47,3 +47,9 @@ export function getAdminEmails(): Set<string> {
     .filter((email) => email !== "");
   return new Set(emails);
 }
+
+export function envStrict(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is not set`);
+  return value;
+}
