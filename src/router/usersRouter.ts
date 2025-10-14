@@ -8,7 +8,7 @@ import {
 } from "../controllers/types.ts";
 import { Validator } from "../shared/middlewares/validator.ts";
 import { UserControllers } from "../controllers/user.controllers.ts";
-import { AdminUsersController } from "../controllers/adminUsers.controllers.js";
+import { AdminUsersController } from "../controllers/admin.controllers.js";
 export const usersRouter = express.Router();
 export const adminRouter = express.Router();
 

@@ -4,8 +4,9 @@ import { Hash } from '../security/Hash.ts'
 import type { AutocompleteQuery, LoginRequestBody, RegisterRequestBody, ResponseBody} from "./types.ts";
 import { isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
 import { Status, Role } from '@prisma/client';
-import { handleError, toAutocompleteOrderBy } from "../shared/helpers/helpers.js";
 import { ResponseBodySelected, SUPERADMINS } from "../shared/constants.ts";
+import { TokensController } from "./tokens.controller.ts";
+import { handleError, toAutocompleteOrderBy } from "../shared/helpers/helpers.ts";
 
 export class UserControllers {
 
@@ -58,9 +59,17 @@ export class UserControllers {
       },
       select: ResponseBodySelected,
     });
+    const token = TokensController.signAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    });
     return { ...user,
       createdAt: user.createdAt.toISOString(),
-      updatedAt: user.updatedAt.toISOString(),}
+      updatedAt: user.updatedAt.toISOString(),
+      token
+    }
   }
 
   public static login = async (request: Request<{}, ResponseBody, LoginRequestBody>, response: Response<ResponseBody>) => {
@@ -78,13 +87,19 @@ export class UserControllers {
       if (SUPERADMINS.has(user.email) && user.role !== Role.ADMIN) {
         await prisma.user.update({ where: { id: user.id }, data: { role: Role.ADMIN } });
       }
+      const token = TokensController.signAccessToken({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      });
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
         ...rest,
         createdAt: createdAt.toISOString(),
         updatedAt: updatedAt.toISOString(),
       };
-      return response.status(200).json(safe);
+      return response.status(200).json({...safe, token});
     } catch (error) {
       return handleError(error, response);
     }

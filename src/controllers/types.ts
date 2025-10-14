@@ -23,6 +23,7 @@ export const ResponseBodySchema = z.object({
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
     version: z.number(),
+    token: z.string(),
 });
 
 export type ResponseBody = z.infer<typeof ResponseBodySchema> | { error: string };
