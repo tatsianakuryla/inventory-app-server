@@ -15,7 +15,7 @@ export class AdminUsersController {
       const take = perPage;
       const orderBy = toUserOrderBy(sortBy, order);
       const where = this.buildSearchWhere(search);
-      const [items, total] = await prisma.$transaction([
+      const [rawItems, total] = await prisma.$transaction([
         prisma.user.findMany({
           where,
           select: ResponseBodySelected,
@@ -24,8 +24,13 @@ export class AdminUsersController {
         }),
         prisma.user.count({ where }),
       ]);
+      const users = rawItems.map((user) => ({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+      }));
       return response.json({
-        items,
+        users,
         meta: {
           page, perPage, total,
           totalPages: Math.max(1, Math.ceil(total / perPage)),
@@ -33,7 +38,7 @@ export class AdminUsersController {
         },
       });
     } catch (error) {
-      handleError(error, response);
+      return handleError(error, response);
     }
   }
 
@@ -76,7 +81,7 @@ export class AdminUsersController {
   }
 
   public static async unblock(request: Request, response: Response) {
-    return this.updateStatus(request, response, Status.BLOCKED, 'unblocked');
+    return this.updateStatus(request, response, Status.ACTIVE, 'unblocked');
   }
 
   private static async updateRole(request: Request, response: Response, role: Role) {
@@ -100,4 +105,13 @@ export class AdminUsersController {
     return this.updateRole(request, response, Role.USER);
   }
 
+  static async remove(request: Request, response: Response) {
+    try {
+      const { ids }: IdsBody = request.body;
+      const result = await prisma.user.deleteMany({
+        where: { id: { in: ids } },
+      });
+      return response.json({ deleted: result.count });
+    } catch (error) { return handleError(error, response); }
+  }
 }
