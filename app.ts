@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import { usersRouter, adminRouter } from "./router/usersRouter.ts";
 import type { ErrorRequestHandler  } from "express";
 import { ALLOWED_ORIGINS } from "./shared/constants.ts";
 
@@ -25,6 +26,8 @@ app.use(cors({
 
 app.use(helmet());
 app.use(express.json());
+app.use('/api/users', usersRouter);
+app.use('/api/admin', adminRouter);
 
 app.get('/', (request, response) => {
     return response.json({ status: 'ok'});
