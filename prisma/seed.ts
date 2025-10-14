@@ -1,19 +1,13 @@
-import prisma from "../db/db.js";
+import prisma from "../db/db.ts";
 import { Role } from "@prisma/client";
+import { SUPERADMINS } from "../shared/constants.ts";
 type PickedUser = { email: string; id: string; role: Role };
 
-function getAdminEmails(): string[] {
-  return (process.env.SUPERADMIN_EMAIL || '')
-    .split(',')
-    .map((email: string) => email.trim())
-    .filter(Boolean);
-}
-
 async function getExistingAdmins(): Promise<PickedUser[]> {
-  const adminEmails = getAdminEmails();
-  if (adminEmails.length === 0) return [];
+  if (SUPERADMINS.size === 0) return [];
+  const array = Array.from(SUPERADMINS);
   return prisma.user.findMany({
-    where: { email: { in: adminEmails } },
+    where: { email: { in: array } },
     select: { email: true, id: true, role: true },
   });
 }

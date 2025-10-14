@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import { isError } from "../typeguards/typeguards.ts";
 import { Prisma } from '@prisma/client';
-import type { UsersQuery } from '../../controllers/types.ts';
+import { Email, type UsersQuery } from '../../controllers/types.ts';
 
 export function handleError(error: unknown, response: Response) {
   if (isError(error)) {
@@ -32,4 +32,18 @@ export function toAutocompleteOrderBy(
   order: 'asc'|'desc'
 ): Prisma.UserOrderByWithRelationInput {
   return sortBy === 'name' ? { name: order } : { email: order };
+}
+
+export function getAdminEmails(): Set<string> {
+  const raw =
+    process.env.SUPERADMIN_EMAILS ??
+    process.env.SUPERADMIN_EMAIL ??
+    "";
+  const emails = raw
+    .split(",")
+    .map((email) => email.trim())
+    .filter(Boolean)
+    .map((email) => Email.parse(email))
+    .filter((email) => email !== "");
+  return new Set(emails);
 }

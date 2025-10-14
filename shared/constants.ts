@@ -1,3 +1,5 @@
+import { getAdminEmails } from "./helpers/helpers.ts";
+
 export const HASH_WORK_FACTOR = 12 as const;
 export const UNIQUE_VALUE_ERROR_CODE = 'P2002';
 export const ALLOWED_ORIGINS = [
@@ -17,3 +19,5 @@ export const ResponseBodySelected = {
   updatedAt: true,
   version: true,
 };
+
+export const SUPERADMINS = getAdminEmails();

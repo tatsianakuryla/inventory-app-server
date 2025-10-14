@@ -1,10 +1,13 @@
 import { z } from 'zod';
 import { Language, Role, Theme, Status } from "@prisma/client";
 
+export const Email = z.string().trim().toLowerCase().email("Invalid email");
+export const Password = z.string().trim().min(6, "Password must be at least 6 characters long");
+
 export const RegisterRequestBodySchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
-    email: z.string().toLowerCase().trim().email("Invalid email"),
-    password: z.string().trim().min(6, "Password must be at least 6 characters long"),
+    email: Email,
+    password: Password,
 });
 
 export type RegisterRequestBody = z.infer<typeof RegisterRequestBodySchema>;
@@ -25,8 +28,8 @@ export const ResponseBodySchema = z.object({
 export type ResponseBody = z.infer<typeof ResponseBodySchema> | { error: string };
 
 export const LoginRequestBodySchema = z.object({
-    email: z.string().toLowerCase().trim().email("Invalid email"),
-    password: z.string().trim(),
+    email: Email,
+    password: Password,
 });
 
 export type LoginRequestBody = z.infer<typeof LoginRequestBodySchema>;

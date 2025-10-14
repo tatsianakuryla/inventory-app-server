@@ -3,9 +3,9 @@ import prisma from "../db/db.ts";
 import { Hash } from '../security/Hash.ts'
 import type { AutocompleteQuery, LoginRequestBody, RegisterRequestBody, ResponseBody} from "./types.ts";
 import { isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
-import { Status } from '@prisma/client';
+import { Status, Role } from '@prisma/client';
 import { handleError, toAutocompleteOrderBy } from "../shared/helpers/helpers.js";
-import { ResponseBodySelected } from "../shared/constants.ts";
+import { ResponseBodySelected, SUPERADMINS } from "../shared/constants.ts";
 
 export class UserControllers {
 
@@ -47,11 +47,14 @@ export class UserControllers {
   private static async createNewUserFromRequest(request: Request<{}, ResponseBody, RegisterRequestBody>): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
+    const normalizedEmail = email.trim().toLowerCase();
+    const role: Role = SUPERADMINS.has(normalizedEmail) ? Role.ADMIN : Role.USER;
     const user = await prisma.user.create({
       data: {
         name,
         email: email.trim().toLowerCase(),
         password: passwordHash,
+        role
       },
       select: ResponseBodySelected,
     });
@@ -72,6 +75,9 @@ export class UserControllers {
       }
       const isPasswordValid = await Hash.verifyPassword(password, user.password);
       if (!isPasswordValid) return response.status(401).json({ error: 'Invalid email or password' });
+      if (SUPERADMINS.has(user.email) && user.role !== Role.ADMIN) {
+        await prisma.user.update({ where: { id: user.id }, data: { role: Role.ADMIN } });
+      }
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
         ...rest,
