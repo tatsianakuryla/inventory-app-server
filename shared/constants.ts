@@ -5,6 +5,15 @@ export const ALLOWED_ORIGINS = [
   'https://site--inventory-app--sm9fnltkyqvh.code.run'
 ];
 
-export const ALLOWED_TO_SORT = [
-  "name", "email", "role", "isBlocked", "createdAt", "updatedAt",
-] as const;
+export const ResponseBodySelected = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  status: true,
+  language: true,
+  theme: true,
+  createdAt: true,
+  updatedAt: true,
+  version: true,
+};

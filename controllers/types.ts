@@ -41,12 +41,22 @@ export const UsersQuerySchema = z.object({
     perPage: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export type UsersQuery = z.infer<typeof UsersQuerySchema>;
+
 const IdSchema = z.string().trim().min(1).cuid();
 
 export const IdsBodySchema = z.union([
     IdSchema,
     z.array(IdSchema).nonempty("At least one id is required").max(100, "Too many ids (max 100)"),
-]).transform((val) => {
-    const arr = Array.isArray(val) ? val : [val];
-    return { ids: Array.from(new Set(arr)) };
+]).transform((value) => {
+    return { ids: Array.from(new Set(value)) };
 });
+
+export const AutocompleteQuerySchema = z.object({
+    search: z.string().trim().min(1),
+    sortBy: z.enum(['name','email']).default('name'),
+    order: z.enum(['asc','desc']).default('asc'),
+    limit: z.coerce.number().int().min(1).max(25).default(10),
+});
+
+export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
