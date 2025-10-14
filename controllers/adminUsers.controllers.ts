@@ -1,7 +1,7 @@
 import type {Request, Response} from "express";
 import prisma from "../db/db.ts";
-import {handleError, toUserOrderBy} from "../shared/helpers/helpers.ts";
-import { Prisma, Status } from "@prisma/client";
+import { handleError, toUserOrderBy } from "../shared/helpers/helpers.ts";
+import { Prisma, Status, Role } from "@prisma/client";
 import { toRole, toStatus } from "../shared/typeguards/typeguards.ts";
 import { ResponseBodySelected } from "../shared/constants.ts";
 import type { IdsBody, UsersQuery} from "./types.js";
@@ -78,4 +78,26 @@ export class AdminUsersController {
   public static async unblock(request: Request, response: Response) {
     return this.updateStatus(request, response, Status.BLOCKED, 'unblocked');
   }
+
+  private static async updateRole(request: Request, response: Response, role: Role) {
+    try {
+      const { ids }: IdsBody = request.body;
+      const result = await prisma.user.updateMany({
+        where: { id: { in: ids }, role: { not: role} },
+        data: { role: role },
+      });
+      return response.json({ updated: result.count, message: `Roles were updated for ${result.count} users`});
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
+  public static async promote(request: Request, response: Response) {
+    return this.updateRole(request, response, Role.ADMIN);
+  }
+
+  public static async demote(request: Request, response: Response) {
+    return this.updateRole(request, response, Role.USER);
+  }
+
 }
