@@ -1,7 +1,7 @@
-import type {Request, Response} from "express";
+import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { handleError, toUserOrderBy } from "../shared/helpers/helpers.ts";
-import { Prisma, Status, Role } from "@prisma/client";
+import { Prisma, Role, Status } from "@prisma/client";
 import { toRole, toStatus } from "../shared/typeguards/typeguards.ts";
 import { ResponseBodySelected } from "../shared/constants.ts";
 import type { IdsBody, UsersQuery} from "./types.js";
