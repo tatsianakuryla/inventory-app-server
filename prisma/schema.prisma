@@ -14,7 +14,7 @@ model User {
   password  String
   image     String?
   role      Role      @default(USER)
-  isBlocked Boolean   @default(false)
+  status    Status    @default(ACTIVE)
   language  Language  @default(EN)
   theme     Theme     @default(LIGHT)
   createdAt DateTime  @default(now())
@@ -25,7 +25,7 @@ model User {
   @@index([name])
   @@index([email])
   @@index([role])
-  @@index([isBlocked])
+  @@index([status])
 }
 
 enum Role {
@@ -41,6 +41,11 @@ enum Language {
 enum Theme {
   LIGHT
   DARK
+}
+
+enum Status {
+  BLOCKED
+  ACTIVE
 }
 
 model Account {
