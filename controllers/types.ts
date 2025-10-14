@@ -55,6 +55,8 @@ export const IdsBodySchema = z.union([
     return { ids: Array.from(new Set(value)) };
 });
 
+export type IdsBody = z.infer<typeof IdsBodySchema>;
+
 export const AutocompleteQuerySchema = z.object({
     search: z.string().trim().min(1),
     sortBy: z.enum(['name','email']).default('name'),

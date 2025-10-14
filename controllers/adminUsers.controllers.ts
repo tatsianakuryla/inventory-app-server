@@ -1,10 +1,10 @@
 import type {Request, Response} from "express";
 import prisma from "../db/db.ts";
 import {handleError, toUserOrderBy} from "../shared/helpers/helpers.ts";
-import { Prisma } from "@prisma/client";
+import { Prisma, Status } from "@prisma/client";
 import { toRole, toStatus } from "../shared/typeguards/typeguards.ts";
 import { ResponseBodySelected } from "../shared/constants.ts";
-import type { UsersQuery } from "./types.js";
+import type { IdsBody, UsersQuery} from "./types.js";
 
 export class AdminUsersController {
 
@@ -56,5 +56,26 @@ export class AdminUsersController {
         return { OR: or };
       }),
     } satisfies Prisma.UserWhereInput;
+  }
+
+  private static async updateStatus(request: Request, response: Response, statusToUpdate: Status, message: string) {
+    try {
+      const { ids }: IdsBody = request.body;
+      const result = await prisma.user.updateMany({
+        where: { id: { in: ids }, status: { not: statusToUpdate } },
+        data: { status: statusToUpdate },
+      });
+      return response.json({ updated: result.count, message: `${result.count} users have been ${message}` });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
+  public static async block(request: Request, response: Response) {
+    return this.updateStatus(request, response, Status.BLOCKED, 'blocked');
+  }
+
+  public static async unblock(request: Request, response: Response) {
+    return this.updateStatus(request, response, Status.BLOCKED, 'unblocked');
   }
 }
