@@ -23,6 +23,7 @@ model User {
   Account      Account[]
   RefreshToken RefreshToken[]
 
+  @@unique([id, version])
   @@index([name])
   @@index([email])
   @@index([role])

@@ -2,9 +2,9 @@ import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { handleError, toUserOrderBy } from "../shared/helpers/helpers.ts";
 import { Prisma, Role, Status } from "@prisma/client";
-import { toRole, toStatus } from "../shared/typeguards/typeguards.ts";
+import { toRole, toStatus} from "../shared/typeguards/typeguards.ts";
 import { ResponseBodySelected } from "../shared/constants.ts";
-import type { IdsBody, UsersQuery} from "./types.js";
+import type {IdsBody, UpdateUserProfile, UpdateUsersRequest, UpdateUsersResponse, UsersQuery} from "./types.ts";
 
 export class AdminUsersController {
 
@@ -63,14 +63,33 @@ export class AdminUsersController {
     } satisfies Prisma.UserWhereInput;
   }
 
-  private static async updateStatus(request: Request, response: Response, statusToUpdate: Status, message: string) {
+  private static async updateStatus(
+    request: Request<{}, UpdateUsersResponse, UpdateUsersRequest>,
+    response: Response<UpdateUsersResponse>,
+    statusToUpdate: Status,
+    message: string
+  ): Promise<Response<UpdateUsersResponse>> {
     try {
-      const { ids }: IdsBody = request.body;
-      const result = await prisma.user.updateMany({
-        where: { id: { in: ids }, status: { not: statusToUpdate } },
-        data: { status: statusToUpdate },
+      const payload = request.body;
+      const updated = payload.map(({ id, version }: UpdateUserProfile) =>
+        prisma.user
+          .updateMany({
+            where: { id, version, status: { not: statusToUpdate } },
+            data: { status: statusToUpdate, version: { increment: 1 } },
+          })
+      );
+      const { updatedIds, skippedIds } = await this.getTransactionResults(payload, updated);
+      const pre = `${updatedIds.length} users were ${message}`;
+      const info = skippedIds.length > 0
+        ? `${pre} from ${payload.length}; ${skippedIds.length} skipped due to version mismatch or already had this status.`
+        : pre;
+      return response.json({
+        updated: updatedIds.length,
+        updatedIds,
+        skipped: skippedIds.length,
+        skippedIds,
+        message: info,
       });
-      return response.json({ updated: result.count, message: `${result.count} users have been ${message}` });
     } catch (error) {
       return handleError(error, response);
     }
@@ -84,17 +103,46 @@ export class AdminUsersController {
     return this.updateStatus(request, response, Status.ACTIVE, 'unblocked');
   }
 
-  private static async updateRole(request: Request, response: Response, role: Role) {
+  private static async updateRole(
+    request: Request<{}, UpdateUsersResponse, UpdateUsersRequest>,
+    response: Response<UpdateUsersResponse>,
+    role: Role,
+  ): Promise<Response<UpdateUsersResponse>>{
     try {
-      const { ids }: IdsBody = request.body;
-      const result = await prisma.user.updateMany({
-        where: { id: { in: ids }, role: { not: role} },
-        data: { role: role },
+      const payload = request.body;
+      const updated = payload.map(({id, version}: UpdateUserProfile) =>
+        prisma.user
+          .updateMany({
+            where: { id, version, role: { not: role } },
+            data: { role: role, version: { increment: 1 } },
+          })
+      );
+      const { updatedIds, skippedIds } = await this.getTransactionResults(payload, updated);
+      const pre = `${updatedIds.length} users were updated`;
+      const info = skippedIds.length > 0
+        ? `${pre} from ${payload.length}; ${skippedIds.length} skipped due to version mismatch or already had the role.`
+        : pre;
+      return response.json({
+        updated: updatedIds.length,
+        updatedIds,
+        skipped: skippedIds.length,
+        skippedIds,
+        message: info,
       });
-      return response.json({ updated: result.count, message: `Roles were updated for ${result.count} users`});
     } catch (error) {
       return handleError(error, response);
     }
+  }
+
+  private static async getTransactionResults(payload: UpdateUsersRequest, updated: Prisma.PrismaPromise<Prisma.BatchPayload>[]): Promise<{ updatedIds: string[]; skippedIds: string[] }> {
+    const preResults = await prisma.$transaction(updated);
+    const results = preResults.map((result, index) => ({
+      id: payload[index]!.id,
+      updated: result.count === 1,
+    }))
+    const updatedIds = results.filter((result) => result.updated).map((result) => result.id);
+    const skippedIds = results.filter((result) => !result.updated).map((result) => result.id);
+    return { updatedIds, skippedIds }
   }
 
   public static async promote(request: Request, response: Response) {

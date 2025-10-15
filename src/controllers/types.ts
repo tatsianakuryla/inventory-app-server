@@ -1,13 +1,15 @@
 import { z } from 'zod';
 import { Language, Role, Theme, Status } from "@prisma/client";
 
-export const Email = z.string().trim().toLowerCase().email("Invalid email");
-export const Password = z.string().trim().min(6, "Password must be at least 6 characters long");
+export const EmailSchema = z.string().trim().toLowerCase().email("Invalid email");
+const PasswordSchema = z.string().trim().min(6, "PasswordSchema must be at least 6 characters long");
+const IdSchema = z.string().trim().min(1).cuid();
+const VersionSchema = z.coerce.number().int().min(1);
 
 export const RegisterRequestBodySchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
-    email: Email,
-    password: Password,
+    email: EmailSchema,
+    password: PasswordSchema,
 });
 
 export type RegisterRequestBody = z.infer<typeof RegisterRequestBodySchema>;
@@ -28,13 +30,11 @@ export const ResponseBodySchema = SafeUserSchema.extend({
     token: z.string(),
 });
 
-export type SafeUser = z.infer<typeof SafeUserSchema> | { error: string };
-
 export type ResponseBody = z.infer<typeof ResponseBodySchema> | { error: string };
 
 export const LoginRequestBodySchema = z.object({
-    email: Email,
-    password: Password,
+    email: EmailSchema,
+    password: PasswordSchema,
 });
 
 export type LoginRequestBody = z.infer<typeof LoginRequestBodySchema>;
@@ -50,8 +50,6 @@ export const UsersQuerySchema = z.object({
 });
 
 export type UsersQuery = z.infer<typeof UsersQuerySchema>;
-
-const IdSchema = z.string().trim().min(1).cuid();
 
 export const IdsBodySchema = z.union([
     IdSchema,
@@ -71,11 +69,35 @@ export const AutocompleteQuerySchema = z.object({
 
 export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 
-export const PayloadSchema = z.object({
+export const AppJwtPayloadSchema = z.object({
     sub: z.string().min(1),
     email: z.string().email(),
     role: z.nativeEnum(Role),
     status: z.nativeEnum(Status),
 });
 
-export type AppJwtPayload = z.infer<typeof PayloadSchema>;
+export type AppJwtPayload = z.infer<typeof AppJwtPayloadSchema>;
+
+export const UpdateUserRequestSchema = z.object({
+    id: IdSchema,
+    version: VersionSchema,
+});
+
+export const UpdateUsersRequestSchema = z
+  .union([UpdateUserRequestSchema, z.array(UpdateUserRequestSchema)])
+  .transform((value) => (Array.isArray(value) ? value : [value]))
+  .refine((array) => array.length > 0, { message: "At least one user is required" })
+  .refine((array) => array.length <= 100, { message: "Too many users (max 100)" });
+
+export type UpdateUserProfile = z.infer<typeof UpdateUserRequestSchema>;
+export type UpdateUsersRequest = z.infer<typeof UpdateUsersRequestSchema>;
+
+export const UpdateUsersResponseSchema = z.object({
+    updated: z.number(),
+    updatedIds: z.array(IdSchema),
+    skipped: z.number(),
+    skippedIds: z.array(IdSchema),
+    message: z.string(),
+});
+
+export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | { error: string};

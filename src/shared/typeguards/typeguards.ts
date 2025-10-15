@@ -1,4 +1,4 @@
-import { UNIQUE_VALUE_ERROR_CODE } from "../constants.ts";
+import { RECORDS_NOT_FOUND, UNIQUE_VALUE_ERROR_CODE } from "../constants.ts";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import type { RoleFromEnum, StatusFromEnum } from "../types/types.js";

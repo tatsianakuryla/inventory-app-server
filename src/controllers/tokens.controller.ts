@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import ms from "ms";
 import { envStrict } from "../shared/helpers/helpers.ts";
 import {toExpiresIn} from "../shared/typeguards/typeguards.ts";
-import { type AppJwtPayload, PayloadSchema } from "./types.ts";
+import { type AppJwtPayload, AppJwtPayloadSchema } from "./types.ts";
 import { type Request } from "express";
 
 const ACCESS_TTL = toExpiresIn(process.env.ACCESS_TTL?.trim(), ms('120m'));
@@ -23,7 +23,7 @@ export class TokensController {
             issuer: "inventory-app",
             clockTolerance: 10,
         });
-        const parsed = PayloadSchema.safeParse(decoded);
+        const parsed = AppJwtPayloadSchema.safeParse(decoded);
         if (!parsed.success) throw new Error("Invalid token payload");
         return parsed.data;
     }

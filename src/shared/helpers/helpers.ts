@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import { isError } from "../typeguards/typeguards.ts";
 import { Prisma } from '@prisma/client';
-import { Email, type UsersQuery } from '../../controllers/types.ts';
+import { EmailSchema, type UsersQuery } from '../../controllers/types.ts';
 
 export function handleError(error: unknown, response: Response) {
   if (isError(error)) {
@@ -43,7 +43,7 @@ export function getAdminEmails(): Set<string> {
     .split(",")
     .map((email) => email.trim())
     .filter(Boolean)
-    .map((email) => Email.parse(email))
+    .map((email) => EmailSchema.parse(email))
     .filter((email) => email !== "");
   return new Set(emails);
 }
