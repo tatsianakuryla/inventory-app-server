@@ -3,7 +3,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import { usersRouter, adminRouter } from "./src/router/usersRouter.ts";
+import { usersRouter } from "./src/router/usersRouter.ts";
+import { adminRouter } from "./src/router/adminRouter.ts"
 import type { ErrorRequestHandler  } from "express";
 import { ALLOWED_ORIGINS } from "./src/shared/constants.ts";
 
