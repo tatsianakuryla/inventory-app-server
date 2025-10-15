@@ -11,11 +11,14 @@ import { requireAuth } from "../shared/middlewares/requireAuth.ts";
 
 export const usersRouter = express.Router();
 
+usersRouter.get('me',
+  requireAuth,
+  requireNotBlocked, UserControllers.getMe);
+
 usersRouter.get('/autocomplete',
   requireAuth,
   requireNotBlocked,
   Validator.requestQueryValidate(AutocompleteQuerySchema), UserControllers.autocompleteGetUsers);
 
 usersRouter.post("/register", Validator.requestBodyValidate(RegisterRequestBodySchema), UserControllers.register);
-
 usersRouter.post("/login", Validator.requestBodyValidate(LoginRequestBodySchema), UserControllers.login);

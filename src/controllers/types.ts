@@ -26,6 +26,7 @@ export const SafeUserSchema = z.object({
     updatedAt: z.string().datetime(),
     version: z.number(),
 });
+
 export const ResponseBodySchema = SafeUserSchema.extend({
     token: z.string(),
 });

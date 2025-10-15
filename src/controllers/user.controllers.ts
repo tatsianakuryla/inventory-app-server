@@ -10,6 +10,32 @@ import { handleError, toAutocompleteOrderBy } from "../shared/helpers/helpers.ts
 
 export class UserControllers {
 
+  public static getMe = async (request: Request, response: Response): Promise<Response<ResponseBody>> => {
+    try {
+      const userJwt = request.user;
+      const user = await prisma.user.findUnique({
+        where: { id: userJwt.sub },
+        select: ResponseBodySelected,
+      });
+      if (!user) {
+        return response.status(401).json({ error: "Unauthorized" });
+      }
+      const token = TokensController.signAccessToken({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+      });
+      return response.json({ ...user,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+        token
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
   public static autocompleteGetUsers = async (request: Request, response: Response) => {
     try {
       const { search, sortBy = 'name', order = 'asc', limit = 10 }: AutocompleteQuery = response.locals.query;
@@ -33,7 +59,7 @@ export class UserControllers {
   };
 
 
-  public static register = async (request: Request<{}, ResponseBody, RegisterRequestBody>, response: Response<ResponseBody>) => {
+  public static register = async (request: Request<{}, ResponseBody, RegisterRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
     try {
       const newUser = await this.createNewUserFromRequest(request);
       return response.status(201).json(newUser);
@@ -72,7 +98,7 @@ export class UserControllers {
     }
   }
 
-  public static login = async (request: Request<{}, ResponseBody, LoginRequestBody>, response: Response<ResponseBody>) => {
+  public static login = async (request: Request<{}, ResponseBody, LoginRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
     try {
       const { email, password } = request.body;
       const user = await prisma.user.findUnique({
