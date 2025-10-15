@@ -12,7 +12,7 @@ export const RegisterRequestBodySchema = z.object({
 
 export type RegisterRequestBody = z.infer<typeof RegisterRequestBodySchema>;
 
-export const ResponseBodySchema = z.object({
+export const SafeUserSchema = z.object({
     id: z.string(),
     email: z.string().email(),
     name: z.string(),
@@ -23,8 +23,12 @@ export const ResponseBodySchema = z.object({
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
     version: z.number(),
+});
+export const ResponseBodySchema = SafeUserSchema.extend({
     token: z.string(),
 });
+
+export type SafeUser = z.infer<typeof SafeUserSchema> | { error: string };
 
 export type ResponseBody = z.infer<typeof ResponseBodySchema> | { error: string };
 
@@ -70,8 +74,8 @@ export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 export const PayloadSchema = z.object({
     sub: z.string().min(1),
     email: z.string().email(),
-    role: z.enum(["USER", "ADMIN"]),
-    status: z.enum(["ACTIVE", "BLOCKED"]),
+    role: z.nativeEnum(Role),
+    status: z.nativeEnum(Status),
 });
 
 export type AppJwtPayload = z.infer<typeof PayloadSchema>;
