@@ -27,6 +27,8 @@ export const SafeUserSchema = z.object({
     version: z.number(),
 });
 
+export type SafeUser = z.infer<typeof SafeUserSchema>;
+
 export const ResponseBodySchema = SafeUserSchema.extend({
     token: z.string(),
 });
@@ -102,3 +104,10 @@ export const UpdateUsersResponseSchema = z.object({
 });
 
 export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | { error: string};
+
+export interface UserForToken  {
+    id: string;
+    email: string;
+    role: Role;
+    status: Status
+}

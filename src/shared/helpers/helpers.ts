@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import { isError } from "../typeguards/typeguards.ts";
 import { Prisma } from '@prisma/client';
-import { EmailSchema, type UsersQuery } from '../../controllers/types.ts';
+import { EmailSchema, type UsersQuery } from '../../controllers/types/controllers.types.ts';
 
 export function handleError(error: unknown, response: Response) {
   if (isError(error)) {
@@ -53,3 +53,5 @@ export function envStrict(name: string): string {
   if (!value) throw new Error(`${name} is not set`);
   return value;
 }
+
+export const normalizeEmail = (email: string) => email.trim().toLowerCase();

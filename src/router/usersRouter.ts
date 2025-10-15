@@ -3,22 +3,25 @@ import {
   LoginRequestBodySchema,
   RegisterRequestBodySchema,
   AutocompleteQuerySchema
-} from "../controllers/types.ts";
+} from "../controllers/types/controllers.types.ts";
 import { Validator } from "../shared/middlewares/validator.ts";
-import { UserControllers } from "../controllers/user.controllers.ts";
+import { UserController } from "../controllers/user.controller.ts";
 import { requireNotBlocked } from "../shared/middlewares/requireNotBlocked.ts";
 import { requireAuth } from "../shared/middlewares/requireAuth.ts";
-
+import { FacebookLoginSchema, GoogleLoginSchema } from "../controllers/social/social.types.ts";
+import { SocialController } from "../controllers/social/social.controller.ts";
 export const usersRouter = express.Router();
 
 usersRouter.get('me',
   requireAuth,
-  requireNotBlocked, UserControllers.getMe);
+  requireNotBlocked, UserController.getMe);
 
 usersRouter.get('/autocomplete',
   requireAuth,
   requireNotBlocked,
-  Validator.requestQueryValidate(AutocompleteQuerySchema), UserControllers.autocompleteGetUsers);
+  Validator.requestQueryValidate(AutocompleteQuerySchema), UserController.autocompleteGetUsers);
 
-usersRouter.post("/register", Validator.requestBodyValidate(RegisterRequestBodySchema), UserControllers.register);
-usersRouter.post("/login", Validator.requestBodyValidate(LoginRequestBodySchema), UserControllers.login);
+usersRouter.post("/register", Validator.requestBodyValidate(RegisterRequestBodySchema), UserController.register);
+usersRouter.post("/login", Validator.requestBodyValidate(LoginRequestBodySchema), UserController.login);
+usersRouter.post("/google/login", Validator.requestBodyValidate(GoogleLoginSchema), SocialController.googleLogin);
+usersRouter.post("/facebook/login", Validator.requestBodyValidate(FacebookLoginSchema), SocialController.facebookLogin);

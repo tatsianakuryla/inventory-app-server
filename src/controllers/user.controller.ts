@@ -1,31 +1,26 @@
 import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { Hash } from '../security/Hash.ts'
-import type { AutocompleteQuery, LoginRequestBody, RegisterRequestBody, ResponseBody} from "./types.ts";
+import type { AutocompleteQuery, LoginRequestBody, RegisterRequestBody, ResponseBody} from "./types/controllers.types.ts";
 import { isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
 import { Status, Role } from '@prisma/client';
-import { ResponseBodySelected, SUPERADMINS } from "../shared/constants.ts";
+import { USER_SELECTED, SUPERADMINS } from "../shared/constants.ts";
 import { TokensController } from "./tokens.controller.ts";
-import { handleError, toAutocompleteOrderBy } from "../shared/helpers/helpers.ts";
+import {handleError, normalizeEmail, toAutocompleteOrderBy} from "../shared/helpers/helpers.ts";
 
-export class UserControllers {
+export class UserController {
 
   public static getMe = async (request: Request, response: Response): Promise<Response<ResponseBody>> => {
     try {
       const userJwt = request.user;
       const user = await prisma.user.findUnique({
         where: { id: userJwt.sub },
-        select: ResponseBodySelected,
+        select: USER_SELECTED,
       });
       if (!user) {
         return response.status(401).json({ error: "Unauthorized" });
       }
-      const token = TokensController.signAccessToken({
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      });
+      const token = TokensController.createTokenForUser(user);
       return response.json({ ...user,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
@@ -58,7 +53,6 @@ export class UserControllers {
     }
   };
 
-
   public static register = async (request: Request<{}, ResponseBody, RegisterRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
     try {
       const newUser = await this.createNewUserFromRequest(request);
@@ -74,23 +68,17 @@ export class UserControllers {
   private static async createNewUserFromRequest(request: Request<{}, ResponseBody, RegisterRequestBody>): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
-    const normalizedEmail = email.trim().toLowerCase();
-    const role: Role = SUPERADMINS.has(normalizedEmail) ? Role.ADMIN : Role.USER;
+    const role: Role = SUPERADMINS.has(normalizeEmail(email)) ? Role.ADMIN : Role.USER;
     const user = await prisma.user.create({
       data: {
         name,
-        email: email.trim().toLowerCase(),
+        email: normalizeEmail(email),
         password: passwordHash,
         role
       },
-      select: ResponseBodySelected,
+      select: USER_SELECTED,
     });
-    const token = TokensController.signAccessToken({
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-    });
+    const token = TokensController.createTokenForUser(user);
     return { ...user,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
@@ -102,23 +90,21 @@ export class UserControllers {
     try {
       const { email, password } = request.body;
       const user = await prisma.user.findUnique({
-        where: { email: email.trim().toLowerCase() }
+        where: { email: normalizeEmail(email) }
       });
       if (!user) return response.status(401).json({ error: 'Invalid email or password' });
       if (user.status === Status.BLOCKED) {
         return response.status(403).json({ error: "The user is blocked" });
+      }
+      if (!user.password) {
+        return response.status(400).json({ error: "This account uses social login. Sign in with Google/Facebook or set a password." });
       }
       const isPasswordValid = await Hash.verifyPassword(password, user.password);
       if (!isPasswordValid) return response.status(401).json({ error: 'Invalid email or password' });
       if (SUPERADMINS.has(user.email) && user.role !== Role.ADMIN) {
         await prisma.user.update({ where: { id: user.id }, data: { role: Role.ADMIN } });
       }
-      const token = TokensController.signAccessToken({
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      });
+      const token = TokensController.createTokenForUser(user);
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
         ...rest,

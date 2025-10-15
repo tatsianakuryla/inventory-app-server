@@ -3,12 +3,12 @@ import prisma from "../db/db.ts";
 import { handleError, toUserOrderBy } from "../shared/helpers/helpers.ts";
 import { Prisma, Role, Status } from "@prisma/client";
 import { toRole, toStatus} from "../shared/typeguards/typeguards.ts";
-import { ResponseBodySelected } from "../shared/constants.ts";
-import type {IdsBody, UpdateUserProfile, UpdateUsersRequest, UpdateUsersResponse, UsersQuery} from "./types.ts";
+import { USER_SELECTED } from "../shared/constants.ts";
+import type {IdsBody, UpdateUserProfile, UpdateUsersRequest, UpdateUsersResponse, UsersQuery} from "./types/controllers.types.ts";
 
 export class AdminUsersController {
 
-  static getUsers = async (request: Request, response: Response) => {
+  public static getUsers = async (request: Request, response: Response) => {
     try {
       const { sortBy = 'createdAt', order = 'desc', search = '', page = 1, perPage = 20 }: UsersQuery  = response.locals.query;
       const skip = (page - 1) * perPage;
@@ -18,7 +18,7 @@ export class AdminUsersController {
       const [rawItems, total] = await prisma.$transaction([
         prisma.user.findMany({
           where,
-          select: ResponseBodySelected,
+          select: USER_SELECTED,
           orderBy,
           skip, take,
         }),
@@ -153,7 +153,7 @@ export class AdminUsersController {
     return this.updateRole(request, response, Role.USER);
   }
 
-  static async remove(request: Request, response: Response) {
+  public static async remove(request: Request, response: Response) {
     try {
       const { ids }: IdsBody = request.body;
       const result = await prisma.user.deleteMany({

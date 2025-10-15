@@ -8,7 +8,7 @@ export const ALLOWED_ORIGINS = [
   'https://site--inventory-app--sm9fnltkyqvh.code.run'
 ];
 
-export const ResponseBodySelected = {
+export const USER_SELECTED = {
   id: true,
   email: true,
   name: true,
@@ -19,6 +19,8 @@ export const ResponseBodySelected = {
   createdAt: true,
   updatedAt: true,
   version: true,
-};
+  googleId: true,
+  facebookId: true,
+} as const;
 
 export const SUPERADMINS = getAdminEmails();
