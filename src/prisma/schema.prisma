@@ -20,14 +20,12 @@ model User {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   version    Int         @default(1)
-  Account    Account[]
   googleId   String?     @unique
   facebookId String?     @unique
   Inventory  Inventory[]
 
-  @@unique([id, version])
+  @@index([id, version])
   @@index([name])
-  @@index([email])
   @@index([role])
   @@index([status])
 }
@@ -52,28 +50,13 @@ enum Status {
   ACTIVE
 }
 
-model Account {
-  id                String    @id @default(cuid())
-  userId            String
-  provider          String
-  providerAccountId String
-  accessToken       String?
-  refreshToken      String?
-  expiresAt         DateTime?
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@index([userId])
-}
-
 model Inventory {
-  id          String @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String
   ownerId     String
-  owner       User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  version   Int      @default(1)
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  version     Int      @default(1)
 }

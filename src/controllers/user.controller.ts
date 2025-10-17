@@ -1,7 +1,13 @@
 import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { Hash } from '../security/Hash.ts'
-import type { AutocompleteQuery, LoginRequestBody, RegisterRequestBody, ResponseBody} from "./types/controllers.types.ts";
+import type {
+  AutocompleteQuery,
+  LoginRequestBody,
+  RegisterRequestBody,
+  ResponseBody,
+  UserBasic
+} from "./types/controllers.types.ts";
 import { isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
 import { Status, Role } from '@prisma/client';
 import { USER_SELECTED, SUPERADMINS } from "../shared/constants.ts";
@@ -97,9 +103,7 @@ export class UserController {
       }
       const isPasswordValid = await Hash.verifyPassword(password, user.password);
       if (!isPasswordValid) return response.status(401).json({ error: 'Invalid email or password' });
-      if (SUPERADMINS.has(user.email) && user.role !== Role.ADMIN) {
-        await prisma.user.update({ where: { id: user.id }, data: { role: Role.ADMIN } });
-      }
+      await this.promoteSuperAdmins(user);
       const token = TokensController.createTokenForUser(user);
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
@@ -110,6 +114,12 @@ export class UserController {
       return response.status(200).json({...safe, token});
     } catch (error) {
       return handleError(error, response);
+    }
+  }
+
+  public static async promoteSuperAdmins(user: UserBasic): Promise<void> {
+    if (SUPERADMINS.has(user.email) && user.role !== Role.ADMIN) {
+      await prisma.user.update({ where: { id: user.id }, data: { role: Role.ADMIN } });
     }
   }
 }
