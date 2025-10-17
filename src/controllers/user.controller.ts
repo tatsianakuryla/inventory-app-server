@@ -12,19 +12,15 @@ export class UserController {
 
   public static getMe = async (request: Request, response: Response): Promise<Response<ResponseBody>> => {
     try {
-      const userJwt = request.user;
+      const { sub } = request.user;
       const user = await prisma.user.findUnique({
-        where: { id: userJwt.sub },
+        where: { id: sub },
         select: USER_SELECTED,
       });
-      if (!user) {
-        return response.status(401).json({ error: "Unauthorized" });
-      }
-      const token = TokensController.createTokenForUser(user);
+      if (!user) return response.status(401).json({ error: "Unauthorized" });
       return response.json({ ...user,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
-        token
       });
     } catch (error) {
       return handleError(error, response);
