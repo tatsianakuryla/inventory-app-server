@@ -2,9 +2,15 @@ import type { Request, Response } from "express";
 import prisma from "../db/db.ts";
 import { handleError, toUserOrderBy } from "../shared/helpers/helpers.ts";
 import { Prisma, Role, Status } from "@prisma/client";
-import { toRole, toStatus} from "../shared/typeguards/typeguards.ts";
-import { USER_SELECTED } from "../shared/constants.ts";
-import type {IdsBody, UpdateUserProfile, UpdateUsersRequest, UpdateUsersResponse, UsersQuery} from "./types/controllers.types.ts";
+import { toRole, toStatus } from "../shared/typeguards/typeguards.ts";
+import { SUPERADMINS, USER_SELECTED } from "../shared/constants.ts";
+import type {
+  IdsBody,
+  UpdateUserProfile,
+  UpdateUsersRequest,
+  UpdateUsersResponse, UserBasic,
+  UsersQuery
+} from "./types/controllers.types.ts";
 
 export class AdminUsersController {
 
@@ -45,7 +51,7 @@ export class AdminUsersController {
   private static buildSearchWhere(search: string) {
     const tokens = (search ?? "")
       .split(/\s+/)
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
     if (tokens.length === 0) return {};
     return {
@@ -70,18 +76,30 @@ export class AdminUsersController {
     message: string
   ): Promise<Response<UpdateUsersResponse>> {
     try {
-      const payload = request.body;
-      const updated = payload.map(({ id, version }: UpdateUserProfile) =>
-        prisma.user
-          .updateMany({
-            where: { id, version, status: { not: statusToUpdate } },
-            data: { status: statusToUpdate, version: { increment: 1 } },
-          })
+      const payload: UpdateUsersRequest = request.body;
+      let allowedIds: string[] = payload.map((user) => user.id);
+      let preSkippedIds: string[] = [];
+      if (statusToUpdate === Status.BLOCKED) {
+        const currentUserId = request.user?.sub ?? "";
+        const { allowedIds: allowed, preSkippedIds: skipped } =
+          await this.getAllowedSkippedGuardIds(allowedIds, currentUserId);
+        allowedIds = allowed;
+        preSkippedIds = skipped;
+      }
+      const allowedSet = new Set(allowedIds);
+      const filteredPayload: UpdateUsersRequest = payload.filter((user) => allowedSet.has(user.id));
+      const updates = filteredPayload.map(({ id, version }: UpdateUserProfile) =>
+        prisma.user.updateMany({
+          where: { id, version, status: { not: statusToUpdate } },
+          data: { status: statusToUpdate, version: { increment: 1 } },
+        })
       );
-      const { updatedIds, skippedIds } = await this.getTransactionResults(payload, updated);
+      const { updatedIds, trSkippedIds } =
+        await this.getTransactionResults(filteredPayload, updates);
+      const skippedIds = Array.from(new Set([...trSkippedIds, ...preSkippedIds]));
       const pre = `${updatedIds.length} users were ${message}`;
       const info = skippedIds.length > 0
-        ? `${pre} from ${payload.length}; ${skippedIds.length} skipped due to version mismatch or already had this status.`
+        ? `${pre} from ${payload.length}; ${skippedIds.length} skipped due to restrictions, version mismatch, or already had this status.`
         : pre;
       return response.json({
         updated: updatedIds.length,
@@ -103,48 +121,6 @@ export class AdminUsersController {
     return this.updateStatus(request, response, Status.ACTIVE, 'unblocked');
   }
 
-  private static async updateRole(
-    request: Request<{}, UpdateUsersResponse, UpdateUsersRequest>,
-    response: Response<UpdateUsersResponse>,
-    role: Role,
-  ): Promise<Response<UpdateUsersResponse>>{
-    try {
-      const payload = request.body;
-      const updated = payload.map(({id, version}: UpdateUserProfile) =>
-        prisma.user
-          .updateMany({
-            where: { id, version, role: { not: role } },
-            data: { role: role, version: { increment: 1 } },
-          })
-      );
-      const { updatedIds, skippedIds } = await this.getTransactionResults(payload, updated);
-      const pre = `${updatedIds.length} users were updated`;
-      const info = skippedIds.length > 0
-        ? `${pre} from ${payload.length}; ${skippedIds.length} skipped due to version mismatch or already had the role.`
-        : pre;
-      return response.json({
-        updated: updatedIds.length,
-        updatedIds,
-        skipped: skippedIds.length,
-        skippedIds,
-        message: info,
-      });
-    } catch (error) {
-      return handleError(error, response);
-    }
-  }
-
-  private static async getTransactionResults(payload: UpdateUsersRequest, updated: Prisma.PrismaPromise<Prisma.BatchPayload>[]): Promise<{ updatedIds: string[]; skippedIds: string[] }> {
-    const preResults = await prisma.$transaction(updated);
-    const results = preResults.map((result, index) => ({
-      id: payload[index]!.id,
-      updated: result.count === 1,
-    }))
-    const updatedIds = results.filter((result) => result.updated).map((result) => result.id);
-    const skippedIds = results.filter((result) => !result.updated).map((result) => result.id);
-    return { updatedIds, skippedIds }
-  }
-
   public static async promote(request: Request, response: Response) {
     return this.updateRole(request, response, Role.ADMIN);
   }
@@ -153,13 +129,123 @@ export class AdminUsersController {
     return this.updateRole(request, response, Role.USER);
   }
 
-  public static async remove(request: Request, response: Response) {
+  public static async remove(
+    request: Request<{}, any, IdsBody>,
+    response: Response
+  ) {
     try {
-      const { ids }: IdsBody = request.body;
-      const result = await prisma.user.deleteMany({
-        where: { id: { in: ids } },
+      const { ids } = request.body;
+      const currentUserId = request.user?.sub ?? "";
+      const { allowedIds, preSkippedIds } =
+        await this.getAllowedSkippedGuardIds(ids, currentUserId);
+      let deleted = 0;
+      if (allowedIds.length) {
+        const result = await prisma.user.deleteMany({
+          where: { id: { in: allowedIds } },
+        });
+        deleted = result.count;
+      }
+      return response.json({
+        deleted,
+        skipped: preSkippedIds.length,
+        skippedIds: preSkippedIds,
       });
-      return response.json({ deleted: result.count });
-    } catch (error) { return handleError(error, response); }
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
+  private static async updateRole(
+    request: Request<{}, UpdateUsersResponse, UpdateUsersRequest>,
+    response: Response<UpdateUsersResponse>,
+    targetRole: Role,
+  ): Promise<Response<UpdateUsersResponse>> {
+    try {
+      const { allowedIds, preSkippedIds } = await this.getAllowedSkippedToRoleUpdate(request, targetRole);
+      const itemsToUpdate = request.body.filter((user) => allowedIds.includes(user.id));
+      const updateQueries = itemsToUpdate.map(({ id, version }) =>
+        prisma.user.updateMany({
+          where: { id, version, role: { not: targetRole } },
+          data: { role: targetRole, version: { increment: 1 } },
+        })
+      );
+      const { updatedIds, trSkippedIds } =
+        await this.getTransactionResults(itemsToUpdate, updateQueries);
+      const skippedIds = Array.from(new Set([...preSkippedIds, ...trSkippedIds]));
+      const pre = `${updatedIds.length} users were updated`;
+      const message = skippedIds.length
+        ? `${pre} from ${request.body.length}; ${skippedIds.length} skipped due to restrictions, version mismatch, or already had the role.`
+        : pre;
+      return response.json({
+        updated: updatedIds.length,
+        updatedIds,
+        skipped: skippedIds.length,
+        skippedIds,
+        message,
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
+  private static async getUsersWithIds(ids: string[]): Promise<UserBasic[]> {
+    return prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, role: true, status: true, email: true },
+    });
+  }
+
+  private static async getAllowedSkippedGuardIds(ids: string[], meId?: string) {
+    const { userById, allowedIds, preSkippedIds} = await this.buildUserGuardContext(ids);
+    for (const id of ids) {
+      const user = userById.get(id);
+      if (!user) { preSkippedIds.push(id); continue; }
+      if (id === meId) { preSkippedIds.push(id); continue; }
+      if (SUPERADMINS.has(user.email)) { preSkippedIds.push(id); continue; }
+      allowedIds.push(id);
+    }
+    return { allowedIds, preSkippedIds };
+  }
+
+  private static async getAllowedSkippedToRoleUpdate(request: Request<{}, any, UpdateUsersRequest>, targetRole: Role): Promise<{allowedIds: string[], preSkippedIds: string[]}> {
+    const requestItems: UpdateUsersRequest = request.body;
+    const currentUserId = request.user?.sub ?? "";
+    const fetchedUsers = await this.getUsersWithIds(requestItems.map((user) => user.id));
+    const usersMap = new Map(fetchedUsers.map((user) => [user.id, user]));
+    const allowedIds: string[] = [];
+    const preSkippedIds: string[] = [];
+    for (const { id } of requestItems) {
+      const foundUser = usersMap.get(id);
+      if (!foundUser) { preSkippedIds.push(id); continue; }
+      if (SUPERADMINS.has(foundUser.email)) { preSkippedIds.push(id); continue; }
+      if (id === currentUserId && !(foundUser.role === Role.ADMIN && targetRole === Role.USER)) {
+        preSkippedIds.push(id);
+        continue;
+      }
+      allowedIds.push(id);
+    }
+    return { allowedIds, preSkippedIds };
+  }
+
+  private static async buildUserGuardContext(ids: string[]): Promise<{
+    userById: Map<string, UserBasic>;
+    allowedIds: string[];
+    preSkippedIds: string[];
+  }> {
+    if (!ids.length) return { userById: new Map(), allowedIds: [], preSkippedIds: [] };
+    const users = await this.getUsersWithIds(ids);
+    const userById = new Map(users.map((user) => [user.id, user]));
+    return { userById, allowedIds: [], preSkippedIds: [] };
+  }
+
+  private static async getTransactionResults(payload: UpdateUsersRequest, updated: Prisma.PrismaPromise<Prisma.BatchPayload>[]): Promise<{ updatedIds: string[]; trSkippedIds: string[] }> {
+    const preResults = await prisma.$transaction(updated);
+    const results = preResults.map((result, index) => ({
+      id: payload[index]!.id,
+      updated: result.count === 1,
+    }))
+    const updatedIds = results.filter((result) => result.updated).map((result) => result.id);
+    const trSkippedIds = results.filter((result) => !result.updated).map((result) => result.id);
+    return { updatedIds, trSkippedIds }
   }
 }

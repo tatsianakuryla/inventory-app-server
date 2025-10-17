@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Language, Role, Theme, Status } from "@prisma/client";
+import { Language, Role, Theme, Status, Prisma} from "@prisma/client";
 
 export const EmailSchema = z.string().trim().toLowerCase().email("Invalid email");
 const PasswordSchema = z.string().trim().min(6, "PasswordSchema must be at least 6 characters long");
@@ -105,3 +105,7 @@ export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | { 
 export interface UserForToken  {
     id: string;
 }
+
+export type UserBasic = Prisma.UserGetPayload<{
+    select: { id: true; email: true; role: true; status: true }
+}>;
