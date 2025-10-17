@@ -1,14 +1,20 @@
 import type { Request, Response, NextFunction } from "express";
 import { TokensController } from "../../controllers/tokens.controller.ts";
+import { isTokenExpiredError } from "../typeguards/typeguards.ts";
+import prisma from "../../db/db.ts";
 
-
-export function requireAuth(request: Request, response: Response, next: NextFunction) {
+export async function requireAuth(request: Request, response: Response, next: NextFunction) {
   const token = TokensController.getBearer(request);
   if (!token) return response.status(401).json({ error: "Unauthenticated" });
   try {
-    request.user = TokensController.verifyAccessToken(token);
+    const payload = TokensController.verifyAccessToken(token);
+    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) return response.status(401).json({ error: "Unauthorized" });
+    request.user = payload;
+    response.locals.user = user;
     return next();
-  } catch {
-    return response.status(401).json({ error: "Invalid or expired token" });
+  } catch (error) {
+    if (isTokenExpiredError(error)) return response.status(401).json({ error: "Token expired" });
+    return response.status(401).json({ error: "Invalid token" });
   }
 }

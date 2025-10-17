@@ -74,9 +74,6 @@ export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 
 export const AppJwtPayloadSchema = z.object({
     sub: z.string().min(1),
-    email: z.string().email(),
-    role: z.nativeEnum(Role),
-    status: z.nativeEnum(Status),
 });
 
 export type AppJwtPayload = z.infer<typeof AppJwtPayloadSchema>;
@@ -107,7 +104,4 @@ export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | { 
 
 export interface UserForToken  {
     id: string;
-    email: string;
-    role: Role;
-    status: Status
 }

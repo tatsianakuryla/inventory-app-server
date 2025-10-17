@@ -1,8 +1,8 @@
-import { RECORDS_NOT_FOUND, UNIQUE_VALUE_ERROR_CODE } from "../constants.ts";
+import { UNIQUE_VALUE_ERROR_CODE } from "../constants.ts";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 import type { RoleFromEnum, StatusFromEnum } from "../types/types.js";
-import type {SignOptions} from "jsonwebtoken";
+import { type SignOptions, TokenExpiredError } from "jsonwebtoken";
 
 function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError;
@@ -34,4 +34,8 @@ type ExpiresIn = NonNullable<SignOptions["expiresIn"]>;
 
 export const toExpiresIn = (value: string | number | undefined, fallback: ExpiresIn): ExpiresIn => {
   return (value ?? fallback) as ExpiresIn;
+}
+
+export function isTokenExpiredError(error: unknown): boolean {
+  return error instanceof TokenExpiredError;
 }
