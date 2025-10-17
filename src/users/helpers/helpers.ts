@@ -1,7 +1,7 @@
 import type { Response } from "express";
-import { isError } from "../typeguards/typeguards.ts";
+import { isError } from "../shared/typeguards/typeguards.ts";
 import { Prisma } from '@prisma/client';
-import { EmailSchema, type UsersQuery } from '../../controllers/types/controllers.types.ts';
+import { EmailSchema, type UsersQuery } from '../controllers/types/controllers.types.ts';
 
 export function handleError(error: unknown, response: Response) {
   if (isError(error)) {

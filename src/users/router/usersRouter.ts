@@ -5,7 +5,7 @@ import {
   AutocompleteQuerySchema
 } from "../controllers/types/controllers.types.ts";
 import { Validator } from "../shared/middlewares/validator.ts";
-import { UserController } from "../controllers/user.controller.ts";
+import { UserController } from "../controllers/user/user.controller.ts";
 import { requireNotBlocked } from "../shared/middlewares/requireNotBlocked.ts";
 import { requireAuth } from "../shared/middlewares/requireAuth.ts";
 import { FacebookLoginSchema, GoogleLoginSchema } from "../controllers/social/social.types.ts";

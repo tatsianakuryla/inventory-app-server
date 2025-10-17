@@ -1,14 +1,14 @@
 import jwt from "jsonwebtoken";
 import ms from "ms";
-import { envStrict } from "../shared/helpers/helpers.ts";
-import { toExpiresIn } from "../shared/typeguards/typeguards.ts";
-import { type AppJwtPayload, AppJwtPayloadSchema, type UserForToken } from "./types/controllers.types.ts";
+import { envStrict } from "../../helpers/helpers.ts";
+import { toExpiresIn } from "../../shared/typeguards/typeguards.ts";
+import { type AppJwtPayload, AppJwtPayloadSchema, type UserForToken } from "../types/controllers.types.ts";
 import { type Request } from "express";
 
 const ACCESS_TTL = toExpiresIn(process.env.ACCESS_TTL?.trim(), ms('120m'));
 const JWT_SECRET = envStrict("JWT_SECRET");
 
-export class TokensController {
+export class TokenController {
     private static signAccessToken(payload: AppJwtPayload) {
         return jwt.sign(payload, JWT_SECRET, {
             expiresIn: ACCESS_TTL,

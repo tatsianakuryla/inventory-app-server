@@ -1,18 +1,18 @@
 import type { Request, Response } from "express";
-import prisma from "../db/db.ts";
-import { Hash } from '../security/Hash.ts'
+import prisma from "../../../shared/db/db.ts";
 import type {
   AutocompleteQuery,
   LoginRequestBody,
   RegisterRequestBody,
   ResponseBody,
   UserBasic
-} from "./types/controllers.types.ts";
-import { isPrismaUniqueError } from "../shared/typeguards/typeguards.ts";
+} from "../types/controllers.types.ts";
+import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
 import { Status, Role } from '@prisma/client';
-import { USER_SELECTED, SUPERADMINS } from "../shared/constants.ts";
-import { TokensController } from "./tokens.controller.ts";
-import {handleError, normalizeEmail, toAutocompleteOrderBy} from "../shared/helpers/helpers.ts";
+import { USER_SELECTED, SUPERADMINS } from "../../shared/constants.ts";
+import { TokenController } from "../token/token.controller.ts";
+import { handleError, normalizeEmail, toAutocompleteOrderBy } from "../../helpers/helpers.ts";
+import { Hash } from "../../security/Hash.ts";
 
 export class UserController {
 
@@ -80,7 +80,7 @@ export class UserController {
       },
       select: USER_SELECTED,
     });
-    const token = TokensController.createTokenForUser(user);
+    const token = TokenController.createTokenForUser(user);
     return { ...user,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
@@ -104,7 +104,7 @@ export class UserController {
       const isPasswordValid = await Hash.verifyPassword(password, user.password);
       if (!isPasswordValid) return response.status(401).json({ error: 'Invalid email or password' });
       await this.promoteSuperAdmins(user);
-      const token = TokensController.createTokenForUser(user);
+      const token = TokenController.createTokenForUser(user);
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
         ...rest,

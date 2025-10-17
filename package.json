@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "node app.ts",
     "start": "node app.ts",
-    "prisma:generate": "prisma generate --schema src/prisma/schema.prisma",
-    "prisma:migrate": "prisma migrate dev --schema src/prisma/schema.prisma",
-    "prisma:push": "prisma db push --schema src/prisma/schema.prisma",
-    "prisma:studio": "prisma studio --schema src/prisma/schema.prisma",
-    "prisma:seed": "prisma db seed --schema src/prisma/schema.prisma",
+    "prisma:generate": "prisma generate --schema src/shared/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema src/shared/prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema src/shared/prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema src/shared/prisma/schema.prisma",
+    "prisma:seed": "prisma db seed --schema src/shared/prisma/schema.prisma",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "prisma": {

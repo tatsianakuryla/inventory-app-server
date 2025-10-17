@@ -1,16 +1,16 @@
 import type { Request, Response } from "express";
-import prisma from "../db/db.ts";
-import { handleError, toUserOrderBy } from "../shared/helpers/helpers.ts";
+import prisma from "../../../shared/db/db.ts";
+import { handleError, toUserOrderBy } from "../../helpers/helpers.ts";
 import { Prisma, Role, Status } from "@prisma/client";
-import { toRole, toStatus } from "../shared/typeguards/typeguards.ts";
-import { SUPERADMINS, USER_SELECTED } from "../shared/constants.ts";
+import { toRole, toStatus } from "../../shared/typeguards/typeguards.ts";
+import { SUPERADMINS, USER_SELECTED } from "../../shared/constants.ts";
 import type {
   IdsBody,
   UpdateUserProfile,
   UpdateUsersRequest,
   UpdateUsersResponse, UserBasic,
   UsersQuery
-} from "./types/controllers.types.ts";
+} from "../types/controllers.types.ts";
 
 export class AdminUsersController {
 

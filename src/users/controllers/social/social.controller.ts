@@ -1,10 +1,10 @@
-import prisma from "../../db/db.ts";
-import { googleClient } from "../../googleClient/googleClient.ts";
+import prisma from "../../../shared/db/db.ts";
+import { googleClient } from "../../../shared/googleClient/googleClient.ts";
 import { Status, Role } from "@prisma/client";
 import type { Request, Response } from "express";
 import { type ResponseBody, type SafeUser } from "../types/controllers.types.ts";
-import { TokensController } from "../tokens.controller.ts";
-import { normalizeEmail } from "../../shared/helpers/helpers.ts";
+import { TokenController } from "../token/token.controller.ts";
+import { normalizeEmail } from "../../helpers/helpers.ts";
 import {
   type FacebookLoginBody,
   type GoogleLoginBody,
@@ -137,7 +137,7 @@ export class SocialController {
     if (user.status === Status.BLOCKED) {
       return response.status(403).json({ error: "User is blocked" });
     }
-    const token = TokensController.createTokenForUser(user);
+    const token = TokenController.createTokenForUser(user);
     return response.json({ ...user, token });
   }
 }

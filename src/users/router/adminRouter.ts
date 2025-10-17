@@ -4,7 +4,7 @@ import { requireNotBlocked } from "../shared/middlewares/requireNotBlocked.ts";
 import { requireAdmin } from "../shared/middlewares/requireAdmin.ts";
 import { Validator } from "../shared/middlewares/validator.ts";
 import { UpdateUsersRequestSchema, UsersQuerySchema } from "../controllers/types/controllers.types.ts";
-import { AdminUsersController } from "../controllers/admin.controller.ts";
+import { AdminUsersController } from "../controllers/admin/admin.controller.ts";
 
 export const adminRouter = express.Router();
 

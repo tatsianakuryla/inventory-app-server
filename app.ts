@@ -1,12 +1,12 @@
-import prisma from "./src/db/db.ts";
+import prisma from "./src/shared/db/db.ts";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import { usersRouter } from "./src/router/usersRouter.ts";
-import { adminRouter } from "./src/router/adminRouter.ts"
+import { usersRouter } from "./src/users/router/usersRouter.ts";
+import { adminRouter } from "./src/users/router/adminRouter.ts"
 import type { ErrorRequestHandler  } from "express";
-import { ALLOWED_ORIGINS } from "./src/shared/constants.ts";
+import { ALLOWED_ORIGINS } from "./src/users/shared/constants.ts";
 
 dotenv.config();
 const app = express();
