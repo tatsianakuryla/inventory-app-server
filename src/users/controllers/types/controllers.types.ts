@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Language, Role, Theme, Status, Prisma} from "@prisma/client";
+import type { ResponseError } from "../../../shared/types/types.ts";
 
 export const EmailSchema = z.string().trim().toLowerCase().email("Invalid email");
 const PasswordSchema = z.string().trim().min(6, "PasswordSchema must be at least 6 characters long");
@@ -33,7 +34,7 @@ export const ResponseBodySchema = SafeUserSchema.extend({
     token: z.string(),
 });
 
-export type ResponseBody = z.infer<typeof ResponseBodySchema> | { error: string };
+export type ResponseBody = z.infer<typeof ResponseBodySchema> | ResponseError;
 
 export const LoginRequestBodySchema = z.object({
     email: EmailSchema,
@@ -74,6 +75,7 @@ export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 
 export const AppJwtPayloadSchema = z.object({
     sub: z.string().min(1),
+    role: z.nativeEnum(Role)
 });
 
 export type AppJwtPayload = z.infer<typeof AppJwtPayloadSchema>;
@@ -100,7 +102,7 @@ export const UpdateUsersResponseSchema = z.object({
     message: z.string(),
 });
 
-export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | { error: string};
+export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | ResponseError;
 
 export interface UserForToken  {
     id: string;

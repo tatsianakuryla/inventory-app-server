@@ -38,7 +38,7 @@ model User {
   name            String
   email           String            @unique
   password        String?
-  image           String?
+  imageUrl        String?
   role            Role              @default(USER)
   status          Status            @default(ACTIVE)
   language        Language          @default(EN)
@@ -50,6 +50,9 @@ model User {
   facebookId      String?           @unique
   Inventory       Inventory[]
   InventoryAccess InventoryAccess[]
+  Item            Item[]
+  ItemLike        ItemLike[]
+  DiscussionPost  DiscussionPost[]
 
   @@index([id, version])
   @@index([name])
@@ -58,33 +61,222 @@ model User {
 }
 
 model Inventory {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   description String?
+  imageUrl    String?
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  isPublic    Boolean   @default(false)
+
   ownerId     String
-  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner       User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   version     Int      @default(1)
 
-  access InventoryAccess[]
+  access            InventoryAccess[]
+  items             Item[]
+  discussions       DiscussionPost[]
+  tags              InventoryTag[]
+  fields            InventoryFields?
+  InventoryIdFormat InventoryIdFormat?
 
   @@index([ownerId])
   @@index([createdAt])
   @@index([id, version])
-  @@index([name])
+  @@index([categoryId])
+  @@index([isPublic, createdAt])
+}
+
+enum FieldState {
+  HIDDEN
+  SHOWN
+}
+
+model InventoryFields {
+  inventoryId String    @id
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  text1State       FieldState @default(HIDDEN)
+  text1Name        String?
+  text1Desc        String?
+  text1ShowInTable Boolean    @default(false)
+
+  text2State       FieldState @default(HIDDEN)
+  text2Name        String?
+  text2Desc        String?
+  text2ShowInTable Boolean    @default(false)
+
+  text3State       FieldState @default(HIDDEN)
+  text3Name        String?
+  text3Desc        String?
+  text3ShowInTable Boolean    @default(false)
+
+  long1State       FieldState @default(HIDDEN)
+  long1Name        String?
+  long1Desc        String?
+  long1ShowInTable Boolean    @default(false)
+
+  long2State       FieldState @default(HIDDEN)
+  long2Name        String?
+  long2Desc        String?
+  long2ShowInTable Boolean    @default(false)
+
+  long3State       FieldState @default(HIDDEN)
+  long3Name        String?
+  long3Desc        String?
+  long3ShowInTable Boolean    @default(false)
+
+  num1State       FieldState @default(HIDDEN)
+  num1Name        String?
+  num1Desc        String?
+  num1ShowInTable Boolean    @default(false)
+
+  num2State       FieldState @default(HIDDEN)
+  num2Name        String?
+  num2Desc        String?
+  num2ShowInTable Boolean    @default(false)
+
+  num3State       FieldState @default(HIDDEN)
+  num3Name        String?
+  num3Desc        String?
+  num3ShowInTable Boolean    @default(false)
+
+  link1State       FieldState @default(HIDDEN)
+  link1Name        String?
+  link1Desc        String?
+  link1ShowInTable Boolean    @default(false)
+
+  link2State       FieldState @default(HIDDEN)
+  link2Name        String?
+  link2Desc        String?
+  link2ShowInTable Boolean    @default(false)
+
+  link3State       FieldState @default(HIDDEN)
+  link3Name        String?
+  link3Desc        String?
+  link3ShowInTable Boolean    @default(false)
+
+  bool1State       FieldState @default(HIDDEN)
+  bool1Name        String?
+  bool1Desc        String?
+  bool1ShowInTable Boolean    @default(false)
+
+  bool2State       FieldState @default(HIDDEN)
+  bool2Name        String?
+  bool2Desc        String?
+  bool2ShowInTable Boolean    @default(false)
+
+  bool3State       FieldState @default(HIDDEN)
+  bool3Name        String?
+  bool3Desc        String?
+  bool3ShowInTable Boolean    @default(false)
+
+  displayOrder Json?
 }
 
 model InventoryAccess {
-  id          String        @id @default(cuid())
-  inventoryId String
-  userId      String
-  role        InventoryRole
-
-  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  inventoryId   String
+  userId        String
+  inventoryRole InventoryRole
+  inventory     Inventory     @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([inventoryId, userId])
   @@index([userId])
-  @@index([inventoryId, role])
+  @@index([inventoryId, inventoryRole])
+}
+
+model Category {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  inventories Inventory[]
+}
+
+model Tag {
+  id          Int            @id @default(autoincrement())
+  name        String         @unique
+  inventories InventoryTag[]
+}
+
+model InventoryTag {
+  inventoryId String
+  tagId       Int
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([inventoryId, tagId])
+  @@index([tagId])
+}
+
+model Item {
+  id          String    @id @default(cuid())
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  customId    String
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  version     Int      @default(1)
+
+  text1 String? @db.Text
+  text2 String? @db.Text
+  text3 String? @db.Text
+
+  long1 String? @db.Text
+  long2 String? @db.Text
+  long3 String? @db.Text
+
+  num1 Float?
+  num2 Float?
+  num3 Float?
+
+  link1 String?
+  link2 String?
+  link3 String?
+
+  bool1 Boolean?
+  bool2 Boolean?
+  bool3 Boolean?
+
+  likes ItemLike[]
+
+  @@unique([inventoryId, customId])
+  @@index([inventoryId])
+  @@index([id, version])
+}
+
+model ItemLike {
+  itemId String
+  userId String
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, userId])
+  @@index([userId])
+}
+
+model DiscussionPost {
+  id          String   @id @default(cuid())
+  inventoryId String
+  authorId    String
+  textMd      String   @db.Text
+  createdAt   DateTime @default(now())
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([inventoryId, createdAt])
+}
+
+model InventoryIdFormat {
+  inventoryId String    @id
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  schema      Json
+  updatedAt   DateTime  @updatedAt
 }

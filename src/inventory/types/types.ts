@@ -1,4 +1,3 @@
-import { INVENTORY_PERMISSIONS } from "../permissions/permissions.ts";
+import { Role } from "@prisma/client";
 
-export type InventoryRoleKey = keyof typeof INVENTORY_PERMISSIONS;
-export type InventoryAction = keyof ((typeof INVENTORY_PERMISSIONS)[InventoryRoleKey]);
+export type UserContext = { id: string | null; role: Role } | undefined;
