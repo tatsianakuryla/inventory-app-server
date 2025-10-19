@@ -6,7 +6,8 @@ import dotenv from "dotenv";
 import { usersRouter } from "./src/users/router/usersRouter.ts";
 import { adminRouter } from "./src/users/router/adminRouter.ts"
 import type { ErrorRequestHandler  } from "express";
-import { ALLOWED_ORIGINS } from "./src/users/shared/constants.ts";
+import { inventoryRouter } from "./src/inventory/router/inventoryRouter.ts";
+import { ALLOWED_ORIGINS } from "./src/shared/constants/constants.ts";
 
 dotenv.config();
 const app = express();
@@ -29,6 +30,7 @@ app.use(helmet());
 app.use(express.json());
 app.use('/api/users', usersRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/inventory', inventoryRouter);
 
 app.get('/', (request, response) => {
     return response.json({ status: 'ok'});

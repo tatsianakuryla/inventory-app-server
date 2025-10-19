@@ -10,9 +10,9 @@ import {
   type Provider,
   PROVIDER_FIELD,
 } from "./social.types.ts";
-import { USER_SELECTED } from "../../shared/constants.ts";
+import { USER_SELECTED } from "../../shared/constants/constants.ts";
 import { Hash } from "../../security/Hash.ts";
-import { SUPERADMINS } from "../../shared/constants.ts";
+import { SUPERADMINS } from "../../shared/constants/constants.ts";
 import { fbDebugUrl, fbProfileUrl}  from "./social.constants.ts";
 
 export class SocialController {

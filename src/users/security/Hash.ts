@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
-import { HASH_WORK_FACTOR } from '../shared/constants.ts';
 import { createHmac } from "node:crypto";
+import { HASH_WORK_FACTOR } from "../../shared/constants/constants.ts";
 
 export class Hash {
   public static async get(password: string): Promise<string> {

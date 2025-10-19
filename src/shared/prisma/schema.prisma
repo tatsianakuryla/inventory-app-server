@@ -69,12 +69,12 @@ model Inventory {
   category    Category? @relation(fields: [categoryId], references: [id])
   isPublic    Boolean   @default(false)
 
-  ownerId     String
-  owner       User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  version     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  version   Int      @default(1)
 
   access            InventoryAccess[]
   items             Item[]
@@ -96,9 +96,9 @@ enum FieldState {
 }
 
 model InventoryFields {
-  inventoryId String    @id
-  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
-
+  inventoryId      String     @id
+  inventory        Inventory  @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  version          Int        @default(1)
   text1State       FieldState @default(HIDDEN)
   text1Name        String?
   text1Desc        String?
@@ -279,4 +279,5 @@ model InventoryIdFormat {
   inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
   schema      Json
   updatedAt   DateTime  @updatedAt
+  version     Int       @default(1)
 }

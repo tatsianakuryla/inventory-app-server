@@ -1,11 +1,4 @@
-import { getAdminEmails } from "./helpers/helpers.ts";
-
-export const HASH_WORK_FACTOR = 12 as const;
-export const UNIQUE_VALUE_ERROR_CODE = 'P2002';
-export const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'https://site--inventory-app--sm9fnltkyqvh.code.run'
-];
+import { getAdminEmails } from "../helpers/helpers.ts";
 
 export const USER_SELECTED = {
   id: true,

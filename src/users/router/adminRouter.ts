@@ -1,7 +1,7 @@
 import express from "express";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
 import { requireAdmin } from "../../shared/middlewares/requireAdmin.ts";
-import { Validator } from "../shared/middlewares/validator.ts";
+import { Validator } from "../../shared/middlewares/validator.ts";
 import { UpdateUsersRequestSchema, UsersQuerySchema } from "../controllers/types/controllers.types.ts";
 import { AdminUsersController } from "../controllers/admin/admin.controller.ts";
 

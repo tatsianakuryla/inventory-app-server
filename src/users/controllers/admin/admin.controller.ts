@@ -3,7 +3,7 @@ import prisma from "../../../shared/db/db.ts";
 import { handleError, toUserOrderBy } from "../../shared/helpers/helpers.ts";
 import { Prisma, Role, Status } from "@prisma/client";
 import { toRole, toStatus } from "../../shared/typeguards/typeguards.ts";
-import { SUPERADMINS, USER_SELECTED } from "../../shared/constants.ts";
+import { SUPERADMINS, USER_SELECTED } from "../../shared/constants/constants.ts";
 import type {
   IdsBody,
   UpdateUserProfile,

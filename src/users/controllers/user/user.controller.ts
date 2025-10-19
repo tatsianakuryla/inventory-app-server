@@ -7,12 +7,12 @@ import {
   type ResponseBody,
   type UserBasic
 } from "../types/controllers.types.ts";
-import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
 import { Status, Role } from '@prisma/client';
-import { USER_SELECTED, SUPERADMINS } from "../../shared/constants.ts";
+import { USER_SELECTED, SUPERADMINS } from "../../shared/constants/constants.ts";
 import { TokenController } from "../token/token.controller.ts";
 import { handleError, toAutocompleteOrderBy } from "../../shared/helpers/helpers.ts";
 import { Hash } from "../../security/Hash.ts";
+import { isPrismaUniqueError } from "../../../shared/typeguards/typeguards.ts";
 
 export class UserController {
 

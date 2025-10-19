@@ -4,7 +4,7 @@ import {
   RegisterRequestBodySchema,
   AutocompleteQuerySchema
 } from "../controllers/types/controllers.types.ts";
-import { Validator } from "../shared/middlewares/validator.ts";
+import { Validator } from "../../shared/middlewares/validator.ts";
 import { UserController } from "../controllers/user/user.controller.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
 import { FacebookLoginSchema, GoogleLoginSchema } from "../controllers/social/social.types.ts";

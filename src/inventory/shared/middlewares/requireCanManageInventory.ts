@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { buildUserContext } from "../helpers/helpers.ts";
-import { InventoryAccessService } from "../../inventoryAccessService/inventoryAccessService.ts";
+import { InventoryAccessService } from "../../inventoryAccessService/inventoryAccessService.js";
 import type { InventoryParameters } from "../types/types.ts";
+import { buildUserContext } from "../helpers/helpers.ts";
 
 export function requireCanManageInventory() {
     return async function (request: Request<InventoryParameters>, response: Response, next: NextFunction) {

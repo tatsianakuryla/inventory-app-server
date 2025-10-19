@@ -1,6 +1,6 @@
 import prisma from "../db/db.ts";
 import { Role } from "@prisma/client";
-import { SUPERADMINS } from "../../users/shared/constants.ts";
+import { SUPERADMINS } from "../../users/shared/constants/constants.ts";
 type PickedUser = { email: string; id: string; role: Role };
 
 async function getExistingAdmins(): Promise<PickedUser[]> {
