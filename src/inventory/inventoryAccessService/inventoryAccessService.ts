@@ -1,7 +1,7 @@
 import prisma from "../../shared/db/db.ts";
 import { Role, InventoryRole } from "@prisma/client";
-import type { UserContext } from "../types/types.ts";
-import { isActionAllowed } from "../permissions/permissions.ts";
+import type { UserContext } from "../shared/types/types.ts";
+import { isActionAllowed } from "../shared/permissions/permissions.ts";
 
 export class InventoryAccessService {
   public static async getInventoryRole(
