@@ -1,7 +1,6 @@
 import express from "express";
-import { requireAuth } from "../shared/middlewares/requireAuth.ts";
-import { requireNotBlocked } from "../shared/middlewares/requireNotBlocked.ts";
-import { requireAdmin } from "../shared/middlewares/requireAdmin.ts";
+import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
+import { requireAdmin } from "../../shared/middlewares/requireAdmin.ts";
 import { Validator } from "../shared/middlewares/validator.ts";
 import { UpdateUsersRequestSchema, UsersQuerySchema } from "../controllers/types/controllers.types.ts";
 import { AdminUsersController } from "../controllers/admin/admin.controller.ts";
@@ -9,42 +8,36 @@ import { AdminUsersController } from "../controllers/admin/admin.controller.ts";
 export const adminRouter = express.Router();
 
 adminRouter.get("/",
-  requireAuth,
-  requireNotBlocked,
+  requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestQueryValidate(UsersQuerySchema),
   AdminUsersController.getUsers);
 adminRouter.post("/users/block",
-  requireAuth,
-  requireNotBlocked,
+  requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
   AdminUsersController.block);
 
 adminRouter.post("/users/unblock",
-  requireAuth,
-  requireNotBlocked,
+  requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
   AdminUsersController.unblock);
 
 adminRouter.post("/users/promote",
-  requireAuth,
-  requireNotBlocked,
+  requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
   AdminUsersController.promote);
 
 adminRouter.post("/users/demote",
-  requireAuth,
-  requireNotBlocked,
+  requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
   AdminUsersController.demote);
 
 adminRouter.delete("/users",
-  requireAuth,
-  requireNotBlocked,
+  requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
   AdminUsersController.remove);

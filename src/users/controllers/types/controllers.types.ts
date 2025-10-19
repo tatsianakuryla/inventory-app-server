@@ -73,12 +73,13 @@ export const AutocompleteQuerySchema = z.object({
 
 export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 
-export const AppJwtPayloadSchema = z.object({
+export const PayloadSchema = z.object({
     sub: z.string().min(1),
-    role: z.nativeEnum(Role)
+    role: z.nativeEnum(Role),
+    version: z.number().optional(),
 });
 
-export type AppJwtPayload = z.infer<typeof AppJwtPayloadSchema>;
+export type Payload = z.infer<typeof PayloadSchema>;
 
 export const UpdateUserRequestSchema = z.object({
     id: IdSchema,
@@ -106,6 +107,7 @@ export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | Re
 
 export interface UserForToken  {
     id: string;
+    role: Role;
 }
 
 export type UserBasic = Prisma.UserGetPayload<{

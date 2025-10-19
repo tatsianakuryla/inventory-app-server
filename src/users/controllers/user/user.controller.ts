@@ -1,17 +1,17 @@
 import type { Request, Response } from "express";
 import prisma from "../../../shared/db/db.ts";
-import type {
-  AutocompleteQuery,
-  LoginRequestBody,
-  RegisterRequestBody,
-  ResponseBody,
-  UserBasic
+import {
+  type AutocompleteQuery, EmailSchema,
+  type LoginRequestBody,
+  type RegisterRequestBody,
+  type ResponseBody,
+  type UserBasic
 } from "../types/controllers.types.ts";
 import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
 import { Status, Role } from '@prisma/client';
 import { USER_SELECTED, SUPERADMINS } from "../../shared/constants.ts";
 import { TokenController } from "../token/token.controller.ts";
-import { handleError, normalizeEmail, toAutocompleteOrderBy } from "../../helpers/helpers.ts";
+import { handleError, toAutocompleteOrderBy } from "../../shared/helpers/helpers.ts";
 import { Hash } from "../../security/Hash.ts";
 
 export class UserController {
@@ -70,11 +70,11 @@ export class UserController {
   private static async createNewUserFromRequest(request: Request<{}, ResponseBody, RegisterRequestBody>): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
-    const role: Role = SUPERADMINS.has(normalizeEmail(email)) ? Role.ADMIN : Role.USER;
+    const role: Role = SUPERADMINS.has(EmailSchema.parse(email)) ? Role.ADMIN : Role.USER;
     const user = await prisma.user.create({
       data: {
         name,
-        email: normalizeEmail(email),
+        email: EmailSchema.parse(email),
         password: passwordHash,
         role
       },
@@ -92,7 +92,7 @@ export class UserController {
     try {
       const { email, password } = request.body;
       const user = await prisma.user.findUnique({
-        where: { email: normalizeEmail(email) }
+        where: { email: EmailSchema.parse(email) }
       });
       if (!user) return response.status(401).json({ error: 'Invalid email or password' });
       if (user.status === Status.BLOCKED) {

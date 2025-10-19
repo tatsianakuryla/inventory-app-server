@@ -2,9 +2,8 @@ import prisma from "../../../shared/db/db.ts";
 import { googleClient } from "../../../shared/googleClient/googleClient.ts";
 import { Status, Role } from "@prisma/client";
 import type { Request, Response } from "express";
-import { type ResponseBody, type SafeUser } from "../types/controllers.types.ts";
+import {EmailSchema, type ResponseBody, type SafeUser} from "../types/controllers.types.ts";
 import { TokenController } from "../token/token.controller.ts";
-import { normalizeEmail } from "../../helpers/helpers.ts";
 import {
   type FacebookLoginBody,
   type GoogleLoginBody,
@@ -30,7 +29,7 @@ export class SocialController {
       });
       const payload = ticket.getPayload();
       if (!payload) return response.status(401).json({ error: "Invalid Google token" });
-      const email = normalizeEmail(payload?.email || "");
+      const email = EmailSchema.parse(payload?.email || "");
       if (!email || payload.email_verified !== true) {
         return response.status(400).json({ error: "Google email missing or not verified" });
       }
@@ -57,7 +56,7 @@ export class SocialController {
       }
       const profile = await this.getFbProfileUrl(accessToken);
       const fbId: string | undefined = profile?.id;
-      const email = normalizeEmail(profile?.email || '');
+      const email = EmailSchema.parse(profile?.email || '');
       if (!fbId) return response.status(401).json({ error: "Facebook profile read failed" });
       if (!email) return response.status(400).json({ error: "Facebook email not granted" });
       const displayName = profile?.name?.trim() || email.split("@")[0] || "User";

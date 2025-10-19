@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import prisma from "../../../shared/db/db.ts";
-import { handleError, toUserOrderBy } from "../../helpers/helpers.ts";
+import { handleError, toUserOrderBy } from "../../shared/helpers/helpers.ts";
 import { Prisma, Role, Status } from "@prisma/client";
 import { toRole, toStatus } from "../../shared/typeguards/typeguards.ts";
 import { SUPERADMINS, USER_SELECTED } from "../../shared/constants.ts";
@@ -16,17 +16,14 @@ export class AdminUsersController {
 
   public static getUsers = async (request: Request, response: Response) => {
     try {
-      const { sortBy = 'createdAt', order = 'desc', search = '', page = 1, perPage = 20 }: UsersQuery  = response.locals.query;
-      const skip = (page - 1) * perPage;
-      const take = perPage;
-      const orderBy = toUserOrderBy(sortBy, order);
+      let { sortBy = 'createdAt', order = 'desc', search = '', page = 1, perPage = 20 }: UsersQuery  = response.locals.query;
       const where = this.buildSearchWhere(search);
       const [rawItems, total] = await prisma.$transaction([
         prisma.user.findMany({
           where,
           select: USER_SELECTED,
-          orderBy,
-          skip, take,
+          orderBy: toUserOrderBy(sortBy, order),
+          skip: (page - 1) * perPage, take: perPage,
         }),
         prisma.user.count({ where }),
       ]);
@@ -35,12 +32,13 @@ export class AdminUsersController {
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
       }));
+      search = search?.trim() ?? "";
       return response.json({
         users,
         meta: {
           page, perPage, total,
           totalPages: Math.max(1, Math.ceil(total / perPage)),
-          sortBy, order, search: search ?? null,
+          sortBy, order, search,
         },
       });
     } catch (error) {
@@ -82,7 +80,7 @@ export class AdminUsersController {
       if (statusToUpdate === Status.BLOCKED) {
         const currentUserId = request.user?.sub ?? "";
         const { allowedIds: allowed, preSkippedIds: skipped } =
-          await this.getAllowedSkippedGuardIds(allowedIds, currentUserId);
+          await this.filterProtectedUserIds(allowedIds, currentUserId);
         allowedIds = allowed;
         preSkippedIds = skipped;
       }
@@ -137,9 +135,9 @@ export class AdminUsersController {
       const { ids } = request.body;
       const currentUserId = request.user?.sub ?? "";
       const { allowedIds, preSkippedIds } =
-        await this.getAllowedSkippedGuardIds(ids, currentUserId);
+        await this.filterProtectedUserIds(ids, currentUserId);
       let deleted = 0;
-      if (allowedIds.length) {
+      if (allowedIds.length > 0) {
         const result = await prisma.user.deleteMany({
           where: { id: { in: allowedIds } },
         });
@@ -161,7 +159,7 @@ export class AdminUsersController {
     targetRole: Role,
   ): Promise<Response<UpdateUsersResponse>> {
     try {
-      const { allowedIds, preSkippedIds } = await this.getAllowedSkippedToRoleUpdate(request, targetRole);
+      const { allowedIds, preSkippedIds } = await this.filterAllowedIdsForRoleUpdate(request, targetRole);
       const itemsToUpdate = request.body.filter((user) => allowedIds.includes(user.id));
       const updateQueries = itemsToUpdate.map(({ id, version }) =>
         prisma.user.updateMany({
@@ -195,7 +193,7 @@ export class AdminUsersController {
     });
   }
 
-  private static async getAllowedSkippedGuardIds(ids: string[], meId?: string) {
+  private static async filterProtectedUserIds(ids: string[], meId?: string) {
     const { userById, allowedIds, preSkippedIds} = await this.buildUserGuardContext(ids);
     for (const id of ids) {
       const user = userById.get(id);
@@ -207,7 +205,7 @@ export class AdminUsersController {
     return { allowedIds, preSkippedIds };
   }
 
-  private static async getAllowedSkippedToRoleUpdate(request: Request<{}, any, UpdateUsersRequest>, targetRole: Role): Promise<{allowedIds: string[], preSkippedIds: string[]}> {
+  private static async filterAllowedIdsForRoleUpdate(request: Request<{}, any, UpdateUsersRequest>, targetRole: Role): Promise<{allowedIds: string[], preSkippedIds: string[]}> {
     const requestItems: UpdateUsersRequest = request.body;
     const currentUserId = request.user?.sub ?? "";
     const fetchedUsers = await this.getUsersWithIds(requestItems.map((user) => user.id));
