@@ -41,10 +41,10 @@ export class AdminUsersController {
         }),
         prisma.user.count({where}),
       ]);
-      const users = rawItems.map((u) => ({
-        ...u,
-        createdAt: u.createdAt.toISOString(),
-        updatedAt: u.updatedAt.toISOString(),
+      const users = rawItems.map((user) => ({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
       }));
       const hasMore = skip + rawItems.length < total;
       const totalPages = Math.max(1, Math.ceil(total / take));

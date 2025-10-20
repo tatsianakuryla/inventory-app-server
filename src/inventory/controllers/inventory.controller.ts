@@ -1,8 +1,14 @@
 import prisma from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
 import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
-import type { InventoryCreateRequest, InventoryListQuery } from "../shared/types/schemas.ts";
-import { isPrismaForeignKeyError, isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
+import type { InventoryCreateRequest,
+  InventoryListQuery,
+  ParamsWithInventoryId } from "../shared/types/schemas.ts";
+import {
+  isPrismaForeignKeyError,
+  isPrismaUniqueError,
+  isPrismaVersionConflictError
+} from "../../shared/typeguards/typeguards.ts";
 import { Prisma, Role } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 
@@ -42,7 +48,7 @@ export class InventoryController {
 
   public static getAll = async (
     request: Request,
-    response: Response<{ }, { query: InventoryListQuery }>
+    response: Response<{}, { query: InventoryListQuery }>
   ) => {
       const {
         search = "",
@@ -93,7 +99,7 @@ export class InventoryController {
     };
   }
 
-  public static getOne = async (request: Request<{inventoryId: string}>, response: Response) => {
+  public static getOne = async (request: Request<ParamsWithInventoryId>, response: Response) => {
     const me = request.user ? { id: request.user.sub, role: request.user.role } : undefined;
     const inventory = await prisma.inventory.findUnique({
       where: { id: request.params.inventoryId },
@@ -114,7 +120,31 @@ export class InventoryController {
     if (!canView) return response.status(403).json({ error: "Forbidden" });
     const { access, ownerId, ...safe } = inventory;
     return response.json(safe);
-  };
+  }
 
-
+  public static update = async (
+    request: Request,
+    response: Response
+  ) => {
+    try {
+      const { version, name, description, isPublic, imageUrl, categoryId } = request.body;
+      const updated = await prisma.inventory.update({
+        where: { id_version: { id: request.params.inventoryId || '', version } },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(description !== undefined && { description }),
+          ...(isPublic !== undefined && { isPublic }),
+          ...(imageUrl !== undefined && { imageUrl }),
+          ...(categoryId !== undefined && { categoryId }),
+          version: { increment: 1 },
+        },
+        select: INVENTORY_SELECTED,
+      });
+      return response.json(updated);
+    } catch (error: unknown) {
+      if (isPrismaVersionConflictError(error)) return response.status(409).json({error: "Version conflict"});
+      if (isPrismaForeignKeyError(error)) return response.status(400).json({error: "Invalid categoryId"});
+      return handleError(error, response);
+    }
+  }
 }

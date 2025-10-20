@@ -83,6 +83,7 @@ model Inventory {
   fields            InventoryFields?
   InventoryIdFormat InventoryIdFormat?
 
+  @@unique([id, version])
   @@index([ownerId])
   @@index([createdAt])
   @@index([id, version])

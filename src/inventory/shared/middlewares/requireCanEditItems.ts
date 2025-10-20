@@ -3,7 +3,7 @@ import { InventoryAccessService } from "../../inventoryAccessService/inventoryAc
 import type { InventoryParameters } from "../types/types.ts";
 import { buildUserContext } from "../helpers/helpers.ts";
 
-export function requireCanEditItems() {
+export const requireCanEditItems = () => {
   return async function (request: Request<InventoryParameters>, response: Response, next: NextFunction) {
     try {
       const userContext = buildUserContext(request);

@@ -32,4 +32,33 @@ export const InventoryUpdateRequestSchema = z.object({
   version: VersionSchema,
 });
 
+export interface ParamsWithInventoryId {
+  inventoryId: string;
+}
+
 export type InventoryUpdateRequest = z.infer<typeof InventoryUpdateRequestSchema>;
+
+export const AccessUpsertSchema = z.object({
+  items: z.array(
+    z.object({
+      userId: z.string().trim().min(1),
+      inventoryRole: z.enum(InventoryRole),
+    })
+  ).min(1),
+});
+
+export type AccessUpsertBody = z.infer<typeof AccessUpsertSchema>;
+
+export const InventoryFieldsUpdateSchema = z.object({
+  version: VersionSchema,
+  patch: z.record(z.string(), z.unknown()),
+});
+
+export type InventoryFieldsUpdateBody = z.infer<typeof InventoryFieldsUpdateSchema>;
+
+export const InventoryIdFormatUpdateSchema = z.object({
+  schema: z.record(z.string(), z.unknown()),
+  version: VersionSchema.optional(),
+});
+
+export type InventoryIdFormatUpdateBody = z.infer<typeof InventoryIdFormatUpdateSchema>;

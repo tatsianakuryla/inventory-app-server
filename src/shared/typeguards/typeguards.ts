@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
-import { FOREIGN_KEY_ERROR_CODE, UNIQUE_VALUE_ERROR_CODE } from "../constants/constants.ts";
+import { FOREIGN_KEY_ERROR_CODE,
+  UNIQUE_VALUE_ERROR_CODE,
+  VERSION_CONFLICT_ERROR_CODE } from "../constants/constants.ts";
 import { ZodError } from "zod";
 
 function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
@@ -12,6 +14,10 @@ export function isPrismaUniqueError(error: unknown): error is Prisma.PrismaClien
 
 export function isPrismaForeignKeyError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   return isPrismaError(error) && error.code === FOREIGN_KEY_ERROR_CODE;
+}
+
+export function isPrismaVersionConflictError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  return isPrismaError(error) && error.code === VERSION_CONFLICT_ERROR_CODE;
 }
 
 export function isError(error: unknown): error is Error {
