@@ -19,6 +19,7 @@ export const InventoryListQuerySchema = z.object({
   sortBy: z.enum(["createdAt", "name"]).optional().default("createdAt"),
   order: z.enum(["asc", "desc"]).optional().default("desc"),
 });
+
 export type InventoryListQuery = z.infer<typeof InventoryListQuerySchema>;
 
 export const InventoryUpdateRequestSchema = z.object({

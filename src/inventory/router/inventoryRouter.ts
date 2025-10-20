@@ -13,4 +13,7 @@ inventoryRouter.post('/',
 
 inventoryRouter.get('/',
   Validator.requestQueryValidate(InventoryListQuerySchema),
-  InventoryController.getInventories);
+  InventoryController.getAll);
+
+inventoryRouter.get('/:inventoryId',
+  InventoryController.getOne);

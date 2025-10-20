@@ -40,7 +40,7 @@ export class InventoryController {
       }
   }
 
-  public static getInventories = async (
+  public static getAll = async (
     request: Request,
     response: Response<{ }, { query: InventoryListQuery }>
   ) => {
@@ -92,5 +92,29 @@ export class InventoryController {
       AND: [searchWhere, visibilityWhere],
     };
   }
+
+  public static getOne = async (request: Request<{inventoryId: string}>, response: Response) => {
+    const me = request.user ? { id: request.user.sub, role: request.user.role } : undefined;
+    const inventory = await prisma.inventory.findUnique({
+      where: { id: request.params.inventoryId },
+      select: {
+        ...INVENTORY_SELECTED,
+        isPublic: true,
+        ownerId: true,
+        access: { select: { userId: true } },
+        fields: true,
+        InventoryIdFormat: true,
+      },
+    });
+    if (!inventory) return response.status(404).json({ error: "Not found" });
+    const canView = me?.role === Role.ADMIN
+      || inventory.isPublic
+      || me?.id === inventory.ownerId
+      || inventory.access.some((access) => access.userId === me?.id);
+    if (!canView) return response.status(403).json({ error: "Forbidden" });
+    const { access, ownerId, ...safe } = inventory;
+    return response.json(safe);
+  };
+
 
 }
