@@ -14,31 +14,51 @@ import type {
 
 export class AdminUsersController {
 
-  public static getUsers = async (request: Request, response: Response) => {
+  public static getUsers = async (
+    request: Request,
+    response: Response<any, { query: UsersQuery }>
+  ) => {
     try {
-      let { sortBy = 'createdAt', order = 'desc', search = '', page = 1, perPage = 20 }: UsersQuery  = response.locals.query;
-      const where = this.buildSearchWhere(search);
+      const {
+        sortBy = "createdAt",
+        order = "desc",
+        search = "",
+        page = 1,
+        perPage = 20,
+      } = response.locals.query;
+      const finalPage = Math.max(1, Number(page) || 1);
+      const take = Math.max(1, Number(perPage) || 20);
+      const skip = (finalPage - 1) * take;
+      const cleanSearch = (search ?? "").trim();
+      const where = this.buildSearchWhere(cleanSearch);
       const [rawItems, total] = await prisma.$transaction([
         prisma.user.findMany({
           where,
           select: USER_SELECTED,
           orderBy: toUserOrderBy(sortBy, order),
-          skip: (page - 1) * perPage, take: perPage,
+          skip,
+          take,
         }),
-        prisma.user.count({ where }),
+        prisma.user.count({where}),
       ]);
-      const users = rawItems.map((user) => ({
-        ...user,
-        createdAt: user.createdAt.toISOString(),
-        updatedAt: user.updatedAt.toISOString(),
+      const users = rawItems.map((u) => ({
+        ...u,
+        createdAt: u.createdAt.toISOString(),
+        updatedAt: u.updatedAt.toISOString(),
       }));
-      search = search?.trim() ?? "";
+      const hasMore = skip + rawItems.length < total;
+      const totalPages = Math.max(1, Math.ceil(total / take));
       return response.json({
         users,
         meta: {
-          page, perPage, total,
-          totalPages: Math.max(1, Math.ceil(total / perPage)),
-          sortBy, order, search,
+          page: finalPage,
+          perPage: take,
+          total,
+          totalPages,
+          sortBy,
+          order,
+          search: cleanSearch,
+          hasMore,
         },
       });
     } catch (error) {
