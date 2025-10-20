@@ -197,4 +197,21 @@ export class InventoryController {
     }
   }
 
+  public static getAccessData = async (request: Request<InventoryParameters>, response: Response) => {
+    try {
+      const accessData = await prisma.inventoryAccess.findMany({
+        where: { inventoryId: request.params.inventoryId },
+        select: {
+          userId: true,
+          inventoryRole: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { inventoryRole: "asc" },
+      });
+      return response.json(accessData);
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
 }

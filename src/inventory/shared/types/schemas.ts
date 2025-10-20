@@ -2,7 +2,12 @@ import { z } from "zod";
 import { InventoryRole, Role } from "@prisma/client";
 
 export type UserContext = { id: string | null; role: Role } | undefined;
-export type InventoryParameters = { inventoryId: string };
+
+export const InventoryParametersSchema = z.object({
+  inventoryId: z.string().min(1),
+})
+
+export type InventoryParameters = z.infer<typeof InventoryParametersSchema>;
 
 export const InventoryCreateRequestSchema = z.object({
   name: z.string().trim().min(1),

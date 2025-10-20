@@ -4,6 +4,7 @@ import {
   InventoryCreateRequestSchema,
   InventoryListQuerySchema, InventoryToDeleteSchema,
   InventoryUpdateRequestSchema,
+  type InventoryParameters
 } from "../shared/types/schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
@@ -20,10 +21,9 @@ inventoryRouter.get('/',
   Validator.requestQueryValidate(InventoryListQuerySchema),
   InventoryController.getAll);
 
-inventoryRouter.get('/:inventoryId',
-  InventoryController.getOne);
+inventoryRouter.get<InventoryParameters>('/:inventoryId', InventoryController.getOne);
 
-inventoryRouter.patch(
+inventoryRouter.patch<InventoryParameters>(
   "/:inventoryId",
   requireAuthAndNotBlocked,
   requireCanManageInventory,
@@ -32,6 +32,10 @@ inventoryRouter.patch(
 
 inventoryRouter.delete('/',
   requireAuthAndNotBlocked,
-  requireCanManageInventory,
   Validator.requestBodyValidate(InventoryToDeleteSchema),
   InventoryController.removeMany);
+
+inventoryRouter.get<InventoryParameters>('/:inventoryId/access',
+  requireAuthAndNotBlocked,
+  requireCanManageInventory,
+  InventoryController.getAccessData);
