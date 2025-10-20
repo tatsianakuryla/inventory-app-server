@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { InventoryRole } from "@prisma/client";
 
 export const InventoryCreateRequestSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   isPublic: z.coerce.boolean().optional().default(false),
-  imageUrl: z.string().url().optional(),
+  imageUrl: z.httpUrl().optional(),
   categoryId: z.coerce.number().int().optional(),
 });
 
@@ -26,7 +27,7 @@ export const InventoryUpdateRequestSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().optional(),
   isPublic: z.coerce.boolean().optional(),
-  imageUrl: z.string().url().nullable().optional(),
+  imageUrl: z.httpUrl().nullable().optional(),
   categoryId: z.coerce.number().int().nullable().optional(),
   version: VersionSchema,
 });

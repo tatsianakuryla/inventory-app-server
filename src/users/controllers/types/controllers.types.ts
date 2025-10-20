@@ -2,9 +2,9 @@ import { z } from 'zod';
 import { Language, Role, Theme, Status, Prisma} from "@prisma/client";
 import type { ResponseError } from "../../../shared/types/types.ts";
 
-export const EmailSchema = z.string().trim().toLowerCase().email("Invalid email");
+export const EmailSchema = z.email("Invalid email").trim().toLowerCase();
 const PasswordSchema = z.string().trim().min(6, "PasswordSchema must be at least 6 characters long");
-const IdSchema = z.string().trim().min(1).cuid();
+const IdSchema = z.cuid().trim().min(1);
 const VersionSchema = z.coerce.number().int().min(1);
 
 export const RegisterRequestBodySchema = z.object({
@@ -17,14 +17,14 @@ export type RegisterRequestBody = z.infer<typeof RegisterRequestBodySchema>;
 
 export const SafeUserSchema = z.object({
     id: z.string(),
-    email: z.string().email(),
+    email: z.email(),
     name: z.string(),
-    role: z.nativeEnum(Role),
-    status: z.nativeEnum(Status),
-    language: z.nativeEnum(Language),
-    theme: z.nativeEnum(Theme),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+    role: z.enum(Role),
+    status: z.enum(Status),
+    language: z.enum(Language),
+    theme: z.enum(Theme),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
     version: z.number(),
 });
 
@@ -75,7 +75,7 @@ export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 
 export const PayloadSchema = z.object({
     sub: z.string().min(1),
-    role: z.nativeEnum(Role),
+    role: z.enum(Role),
     version: z.number().optional(),
 });
 
