@@ -35,8 +35,6 @@ export const InventoryUpdateRequestSchema = z.object({
   version: VersionSchema,
 });
 
-export type InventoryUpdateRequest = z.infer<typeof InventoryUpdateRequestSchema>;
-
 export const AccessUpsertSchema = z.object({
   items: z.array(
     z.object({
@@ -61,3 +59,16 @@ export const InventoryIdFormatUpdateSchema = z.object({
 });
 
 export type InventoryIdFormatUpdateBody = z.infer<typeof InventoryIdFormatUpdateSchema>;
+
+export const InventoryToDeleteSchema = z.object({
+    id: z.string().min(1),
+    version: z.coerce.number().int().min(1),
+});
+
+export type InventoryToDelete = z.infer<typeof InventoryToDeleteSchema>;
+
+export const DeleteInventoriesBodySchema = z.object({
+  inventories: z.array(InventoryToDeleteSchema).min(1).max(200, 'Too many inventories to delete')
+});
+
+export type DeleteInventoriesBody = z.infer<typeof DeleteInventoriesBodySchema>;

@@ -1,9 +1,12 @@
 import prisma from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
 import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
-import type { InventoryCreateRequest,
+import type {
+  InventoryCreateRequest,
   InventoryListQuery,
   InventoryParameters,
+  DeleteInventoriesBody,
+  InventoryToDelete
 } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
@@ -12,6 +15,7 @@ import {
 } from "../../shared/typeguards/typeguards.ts";
 import { Prisma, Role } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
+import type { Payload } from "../../users/controllers/types/controllers.types.ts";
 
 export class InventoryController {
 
@@ -145,4 +149,52 @@ export class InventoryController {
       return handleError(error, response);
     }
   }
+
+  public static removeMany = async (
+    request: Request<{}, {}, DeleteInventoriesBody>,
+    response: Response
+  ) => {
+    try {
+      const me = request.user;
+      const isAdmin = me?.role === Role.ADMIN;
+      const inventories = request.body.inventories;
+      let allowed = inventories;
+      if (!isAdmin) allowed = await this.getAllowedToRemove(inventories, me);
+      const deleteOperations = allowed.map(({ id, version }) =>
+        prisma.inventory.deleteMany({ where: { id, version } })
+      );
+      const results = deleteOperations.length ? await prisma.$transaction(deleteOperations) : [];
+      return response.json(this.filterDeletedSkippedIds(results, allowed, inventories));
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
+  private static async getAllowedToRemove(inventories: InventoryToDelete[], me: Payload) {
+    const ids = inventories.map((inventory) => inventory.id);
+    const owners = await prisma.inventory.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, ownerId: true },
+    });
+    const ownerSet = new Set(owners.filter((owner) => owner.ownerId === me.sub).map((owner) => owner.id));
+    return inventories.filter((inventory) => ownerSet.has(inventory.id));
+  }
+
+  private static filterDeletedSkippedIds(results: Prisma.BatchPayload[], inventories: InventoryToDelete[], allowed: InventoryToDelete[], ) {
+    const deletedIds: string[] = [];
+    const conflictIds: string[] = [];
+    results.forEach((result, index) => {
+      (result.count === 1 ? deletedIds : conflictIds).push(allowed[index]!.id);
+    });
+    const preSkippedIds = inventories.map((inventory) => inventory.id).filter((id) => !allowed.some(item => item.id === id));
+    return {
+      deleted: deletedIds.length,
+      deletedIds,
+      conflicts: conflictIds.length,
+      conflictIds,
+      skipped: preSkippedIds.length,
+      skippedIds: preSkippedIds,
+    }
+  }
+
 }

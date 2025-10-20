@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Validator } from '../../shared/middlewares/validator.ts'
 import {
   InventoryCreateRequestSchema,
-  InventoryListQuerySchema,
+  InventoryListQuerySchema, InventoryToDeleteSchema,
   InventoryUpdateRequestSchema,
 } from "../shared/types/schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
@@ -28,5 +28,10 @@ inventoryRouter.patch(
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(InventoryUpdateRequestSchema),
-  InventoryController.update
-);
+  InventoryController.update);
+
+inventoryRouter.delete('/',
+  requireAuthAndNotBlocked,
+  requireCanManageInventory,
+  Validator.requestBodyValidate(InventoryToDeleteSchema),
+  InventoryController.removeMany);
