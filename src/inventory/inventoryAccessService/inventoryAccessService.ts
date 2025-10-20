@@ -1,7 +1,7 @@
 import prisma from "../../shared/db/db.ts";
 import { Role, InventoryRole } from "@prisma/client";
-import type { UserContext } from "../shared/types/types.ts";
 import { isActionAllowed } from "../shared/permissions/permissions.ts";
+import type { UserContext } from "../shared/types/schemas.ts";
 
 export class InventoryAccessService {
   public static async getInventoryRole(
@@ -20,8 +20,8 @@ export class InventoryAccessService {
     });
     if (!inventory) throw new Error("Inventory not found");
     if (user.id === inventory.ownerId) return InventoryRole.OWNER;
-    const explicit = inventory.access[0]?.inventoryRole;
-    if (explicit) return explicit;
+    const userAccessRole = inventory.access.at(0)?.inventoryRole;
+    if (userAccessRole) return userAccessRole;
     if (inventory.isPublic) return InventoryRole.EDITOR;
     return InventoryRole.VIEWER;
   }

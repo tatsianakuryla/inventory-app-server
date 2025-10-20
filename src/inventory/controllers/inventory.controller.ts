@@ -3,7 +3,8 @@ import type { Request, Response } from "express";
 import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
 import type { InventoryCreateRequest,
   InventoryListQuery,
-  ParamsWithInventoryId } from "../shared/types/schemas.ts";
+  InventoryParameters,
+} from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
   isPrismaUniqueError,
@@ -99,7 +100,7 @@ export class InventoryController {
     };
   }
 
-  public static getOne = async (request: Request<ParamsWithInventoryId>, response: Response) => {
+  public static getOne = async (request: Request<InventoryParameters>, response: Response) => {
     const me = request.user ? { id: request.user.sub, role: request.user.role } : undefined;
     const inventory = await prisma.inventory.findUnique({
       where: { id: request.params.inventoryId },
@@ -122,14 +123,11 @@ export class InventoryController {
     return response.json(safe);
   }
 
-  public static update = async (
-    request: Request,
-    response: Response
-  ) => {
+  public static update = async (request: Request<InventoryParameters>, response: Response) => {
     try {
       const { version, name, description, isPublic, imageUrl, categoryId } = request.body;
       const updated = await prisma.inventory.update({
-        where: { id_version: { id: request.params.inventoryId || '', version } },
+        where: { id_version: { id: request.params.inventoryId, version } },
         data: {
           ...(name !== undefined && { name }),
           ...(description !== undefined && { description }),

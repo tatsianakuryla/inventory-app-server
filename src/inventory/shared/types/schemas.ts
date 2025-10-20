@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { InventoryRole } from "@prisma/client";
+import { InventoryRole, Role } from "@prisma/client";
+
+export type UserContext = { id: string | null; role: Role } | undefined;
+export type InventoryParameters = { inventoryId: string };
 
 export const InventoryCreateRequestSchema = z.object({
   name: z.string().trim().min(1),
@@ -31,10 +34,6 @@ export const InventoryUpdateRequestSchema = z.object({
   categoryId: z.coerce.number().int().nullable().optional(),
   version: VersionSchema,
 });
-
-export interface ParamsWithInventoryId {
-  inventoryId: string;
-}
 
 export type InventoryUpdateRequest = z.infer<typeof InventoryUpdateRequestSchema>;
 
