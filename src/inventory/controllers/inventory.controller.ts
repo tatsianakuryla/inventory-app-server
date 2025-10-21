@@ -1,14 +1,15 @@
 import prisma from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
 import { INVENTORY_SELECTED} from "../shared/constants/constants.ts";
-import {
-  type InventoryCreateRequest,
-  type InventoryListQuery,
-  type InventoryParameters,
-  type DeleteInventoriesBody,
-  type InventoryToDelete,
-  type InventoryAccessEntry,
-  type UpsertAccessBody
+import type {
+  InventoryCreateRequest,
+  InventoryListQuery,
+  InventoryParameters,
+  DeleteInventoriesBody,
+  InventoryToDelete,
+  InventoryAccessEntry,
+  UpsertAccessBody,
+  RevokeAccessBody
 } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
@@ -288,4 +289,61 @@ export class InventoryController {
     const unchanged = valid.filter((access) => currentMap.get(access.userId) === access.inventoryRole);
     return { toCreate, toUpdate, unchanged, skippedInvalidOwnerUserIds };
   }
+
+  public static deleteAccess = async (
+    request: Request<InventoryParameters, {}, RevokeAccessBody>,
+    response: Response
+  ) => {
+    try {
+      const { inventoryId } = request.params;
+      const { userIds } = request.body;
+      const [inventory, currentAccess] = await prisma.$transaction([
+        prisma.inventory.findUnique({
+          where: { id: inventoryId },
+          select: { ownerId: true },
+        }),
+        prisma.inventoryAccess.findMany({
+          where: { inventoryId, userId: { in: userIds } },
+          select: { userId: true },
+        }),
+      ]);
+      if (!inventory) return response.status(404).json({ error: "Inventory not found" });
+      const {
+        toDeleteUserIds,
+        skippedOwnerUserIds,
+        notFoundUserIds,
+      } = this.partitionRevokedAccess(currentAccess, userIds, inventory.ownerId);
+      let deleted = 0;
+      if (toDeleteUserIds.length) {
+        const result = await prisma.inventoryAccess.deleteMany({
+          where: { inventoryId, userId: { in: toDeleteUserIds } },
+        });
+        deleted = result.count;
+      }
+      return response.json({
+        deleted,
+        deletedUserIds: toDeleteUserIds,
+        skipped: skippedOwnerUserIds.length,
+        skippedOwnerUserIds,
+        notFound: notFoundUserIds.length,
+        notFoundUserIds,
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  };
+
+  private static partitionRevokedAccess(
+    currentAccess: { userId: string }[],
+    userIds: string[],
+    ownerId: string
+  ) {
+    const existingSet = new Set(currentAccess.map((access) => access.userId));
+    const skippedOwnerUserIds = userIds.filter((id) => id === ownerId);
+    const allowedIds = userIds.filter((id) => id !== ownerId);
+    const toDeleteUserIds = allowedIds.filter((id) => existingSet.has(id));
+    const notFoundUserIds = allowedIds.filter((id) => !existingSet.has(id));
+    return { toDeleteUserIds, skippedOwnerUserIds, notFoundUserIds };
+  }
+
 }

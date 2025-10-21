@@ -5,6 +5,7 @@ import {
   InventoryListQuerySchema, InventoryToDeleteSchema,
   InventoryUpdateRequestSchema,
   UpsertAccessBodySchema,
+  RevokeAccessBodySchema,
   type InventoryParameters,
 } from "../shared/types/schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
@@ -46,3 +47,11 @@ inventoryRouter.put<InventoryParameters>('/:inventoryId/access',
   requireCanManageInventory,
   Validator.requestBodyValidate(UpsertAccessBodySchema),
   InventoryController.updateInventoryAccess);
+
+inventoryRouter.delete<InventoryParameters>(
+  "/:inventoryId/access",
+  requireAuthAndNotBlocked,
+  requireCanManageInventory,
+  Validator.requestBodyValidate(RevokeAccessBodySchema),
+  InventoryController.deleteAccess
+);

@@ -4,7 +4,7 @@ import type { ResponseError } from "../../../shared/types/types.ts";
 
 export const EmailSchema = z.email("Invalid email").trim().toLowerCase();
 const PasswordSchema = z.string().trim().min(6, "PasswordSchema must be at least 6 characters long");
-const IdSchema = z.cuid().trim().min(1);
+export const IdSchema = z.cuid().trim().min(1);
 const VersionSchema = z.coerce.number().int().min(1);
 
 export const RegisterRequestBodySchema = z.object({

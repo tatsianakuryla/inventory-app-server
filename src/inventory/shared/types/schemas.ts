@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { InventoryRole, Role } from "@prisma/client";
-
+import { IdSchema } from '../../../users/controllers/types/controllers.types.ts';
 export type UserContext = { id: string | null; role: Role } | undefined;
 
 export const InventoryParametersSchema = z.object({
@@ -63,7 +63,19 @@ export const InventoryAccessEntrySchema = z.object(
 export type InventoryAccessEntry = z.infer<typeof InventoryAccessEntrySchema>;
 
 export const UpsertAccessBodySchema = z.object({
-  accesses: z.array(InventoryAccessEntrySchema).min(1).max(200),
+  accesses: z.array(InventoryAccessEntrySchema).min(1).max(200, 'Too many users to update access'),
 });
 
 export type UpsertAccessBody = z.infer<typeof UpsertAccessBodySchema>;
+
+const RevokeAccessSchema = z.object({ userId: IdSchema });
+const RevokeAccessManySchema   = z.object({
+  userIds: z.array(IdSchema)
+    .min(1).max(200)
+    .refine((array) => new Set(array).size === array.length, { message: "Duplicate userId" }),
+});
+
+export const RevokeAccessBodySchema = z.union([RevokeAccessSchema, RevokeAccessManySchema])
+  .transform((data) => ("userId" in data ? { userIds: [data.userId] } : data));
+
+export type RevokeAccessBody = z.infer<typeof RevokeAccessBodySchema>;
