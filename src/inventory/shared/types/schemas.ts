@@ -88,3 +88,20 @@ export const UpdateInventoryFieldsBodySchema = z.object({
 });
 
 export type UpdateInventoryFieldsBody = z.infer<typeof UpdateInventoryFieldsBodySchema>;
+
+export const JsonSchema: z.ZodType<Prisma.InputJsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(JsonSchema),
+    z.record(z.string(), JsonSchema),
+  ])
+);
+
+export const InventoryIdFormatUpdateBodySchema = z.object({
+  schema: JsonSchema,
+  version: z.number().int().min(1).optional(),
+});
+
+export type InventoryIdFormatUpdateBody = z.infer<typeof InventoryIdFormatUpdateBodySchema>;

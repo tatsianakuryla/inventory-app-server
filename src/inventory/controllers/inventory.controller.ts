@@ -11,6 +11,7 @@ import type {
   UpsertAccessBody,
   RevokeAccessBody,
   UpdateInventoryFieldsBody,
+  InventoryIdFormatUpdateBody
 } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
@@ -416,4 +417,45 @@ export class InventoryController {
     });
     return { ...(final as { inventoryId: string; version: number }), created: false };
   }
+
+  public static updateIdFormat = async (
+    request: Request<InventoryParameters, {}, InventoryIdFormatUpdateBody>,
+    response: Response
+  ) => {
+    try {
+      const { schema, version } = request.body;
+      const { inventoryId } = request.params;
+      const existing = await prisma.inventoryIdFormat.findUnique({ where: { inventoryId } });
+      if (!existing) {
+        const created = await prisma.inventoryIdFormat.create({
+          data: { inventoryId, schema },
+          select: { inventoryId: true, schema: true, version: true, updatedAt: true },
+        });
+        return response.status(201).json(created);
+      }
+      if (version === undefined) {
+        const upd = await prisma.inventoryIdFormat.update({
+          where: { inventoryId },
+          data: { schema },
+          select: { inventoryId: true, schema: true, version: true, updatedAt: true },
+        });
+        return response.json(upd);
+      }
+      const result = await prisma.inventoryIdFormat.updateMany({
+        where: { inventoryId, version },
+        data: { schema, version: { increment: 1 } },
+      });
+      if (result.count !== 1) {
+        return response.status(409).json({ error: VERSION_CONFLICT_ERROR_MESSAGE });
+      }
+      const final = await prisma.inventoryIdFormat.findUnique({
+        where: { inventoryId },
+        select: { inventoryId: true, schema: true, version: true, updatedAt: true },
+      });
+      return response.json(final);
+    } catch (error) {
+      return handleError(error, response);
+    }
+  }
+
 }
