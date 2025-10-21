@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { InventoryRole, Role } from "@prisma/client";
+import { InventoryRole, Role, Prisma } from "@prisma/client";
 import { IdSchema } from '../../../users/controllers/types/controllers.types.ts';
 export type UserContext = { id: string | null; role: Role } | undefined;
 
@@ -69,6 +69,7 @@ export const UpsertAccessBodySchema = z.object({
 export type UpsertAccessBody = z.infer<typeof UpsertAccessBodySchema>;
 
 const RevokeAccessSchema = z.object({ userId: IdSchema });
+
 const RevokeAccessManySchema   = z.object({
   userIds: z.array(IdSchema)
     .min(1).max(200)
@@ -79,3 +80,11 @@ export const RevokeAccessBodySchema = z.union([RevokeAccessSchema, RevokeAccessM
   .transform((data) => ("userId" in data ? { userIds: [data.userId] } : data));
 
 export type RevokeAccessBody = z.infer<typeof RevokeAccessBodySchema>;
+
+export const UpdateInventoryFieldsBodySchema = z.object({
+  version: z.number().int().min(1),
+  patch: z.record(z.string(), z.unknown())
+  .refine((object) => Object.keys(object).length > 0, { message: "Empty patch" }),
+});
+
+export type UpdateInventoryFieldsBody = z.infer<typeof UpdateInventoryFieldsBodySchema>;

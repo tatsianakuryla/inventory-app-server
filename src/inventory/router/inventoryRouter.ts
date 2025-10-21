@@ -7,6 +7,7 @@ import {
   UpsertAccessBodySchema,
   RevokeAccessBodySchema,
   type InventoryParameters,
+  UpdateInventoryFieldsBodySchema
 } from "../shared/types/schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
@@ -54,4 +55,12 @@ inventoryRouter.delete<InventoryParameters>(
   requireCanManageInventory,
   Validator.requestBodyValidate(RevokeAccessBodySchema),
   InventoryController.deleteAccess
+);
+
+inventoryRouter.put<InventoryParameters>(
+  "/:inventoryId/fields",
+  requireAuthAndNotBlocked,
+  requireCanManageInventory,
+  Validator.requestBodyValidate(UpdateInventoryFieldsBodySchema),
+  InventoryController.updateInventoryFields
 );

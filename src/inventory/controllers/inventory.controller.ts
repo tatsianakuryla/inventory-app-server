@@ -1,6 +1,6 @@
 import prisma from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
-import { INVENTORY_SELECTED} from "../shared/constants/constants.ts";
+import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
 import type {
   InventoryCreateRequest,
   InventoryListQuery,
@@ -9,7 +9,8 @@ import type {
   InventoryToDelete,
   InventoryAccessEntry,
   UpsertAccessBody,
-  RevokeAccessBody
+  RevokeAccessBody,
+  UpdateInventoryFieldsBody,
 } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
@@ -19,6 +20,8 @@ import {
 import { Prisma, Role, InventoryRole } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import type { Payload } from "../../users/controllers/types/controllers.types.ts";
+import { isFieldKey, type WritableFields, type WritableKey } from "../shared/typeguards/typeguards.ts";
+import {VERSION_CONFLICT_ERROR_MESSAGE} from "../../shared/constants/constants.js";
 
 export class InventoryController {
 
@@ -346,4 +349,71 @@ export class InventoryController {
     return { toDeleteUserIds, skippedOwnerUserIds, notFoundUserIds };
   }
 
+  public static updateInventoryFields = async (
+    request: Request<InventoryParameters, {}, UpdateInventoryFieldsBody>,
+    response: Response
+  ) => {
+    try {
+      const { version, patch } = request.body;
+      const { inventoryId } = request.params;
+      const data = this.buildFieldsPatch(patch);
+      if (Object.keys(data).length === 0) {
+        return response.status(400).json({ error: "Empty or invalid patch" });
+      }
+      const saved = await this.persistInventoryFields(inventoryId, version, data);
+      return response
+        .status(saved.created ? 201 : 200)
+        .json({ inventoryId: saved.inventoryId, version: saved.version });
+    } catch (error: unknown) {
+      if (isPrismaVersionConflictError(error)) {
+        return response.status(409).json({ error: VERSION_CONFLICT_ERROR_MESSAGE });
+      }
+      return handleError(error, response);
+    }
+  };
+
+  private static buildFieldsPatch(
+    patch: Record<string, unknown>
+  ): Partial<WritableFields> {
+    const data: Partial<WritableFields> = {};
+    const entries = Object.entries(patch) as Array<
+      [WritableKey, WritableFields[WritableKey]]
+    >;
+    for (const [key, value] of entries) {
+      if (isFieldKey(key)) {
+        (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = value;
+      }
+    }
+    return data;
+  }
+
+  private static async persistInventoryFields(
+    inventoryId: string,
+    version: number,
+    data: Partial<WritableFields>
+  ): Promise<{ inventoryId: string; version: number; created: boolean }> {
+    const exists = await prisma.inventoryFields.findUnique({ where: { inventoryId } });
+    if (!exists) {
+      const created = await prisma.inventoryFields.create({
+        data: { inventoryId, ...data },
+        select: { inventoryId: true, version: true },
+      });
+      return { ...created, created: true };
+    }
+    const result = await prisma.inventoryFields.updateMany({
+      where: { inventoryId, version },
+      data: {
+        ...data,
+        version: { increment: 1 },
+      },
+    });
+    if (result.count !== 1) {
+      throw new Error(VERSION_CONFLICT_ERROR_MESSAGE);
+    }
+    const final = await prisma.inventoryFields.findUnique({
+      where: { inventoryId },
+      select: { inventoryId: true, version: true },
+    });
+    return { ...(final as { inventoryId: string; version: number }), created: false };
+  }
 }
