@@ -40,31 +40,6 @@ export const InventoryUpdateRequestSchema = z.object({
   version: VersionSchema,
 });
 
-export const AccessUpsertSchema = z.object({
-  items: z.array(
-    z.object({
-      userId: z.string().trim().min(1),
-      inventoryRole: z.enum(InventoryRole),
-    })
-  ).min(1),
-});
-
-export type AccessUpsertBody = z.infer<typeof AccessUpsertSchema>;
-
-export const InventoryFieldsUpdateSchema = z.object({
-  version: VersionSchema,
-  patch: z.record(z.string(), z.unknown()),
-});
-
-export type InventoryFieldsUpdateBody = z.infer<typeof InventoryFieldsUpdateSchema>;
-
-export const InventoryIdFormatUpdateSchema = z.object({
-  schema: z.record(z.string(), z.unknown()),
-  version: VersionSchema.optional(),
-});
-
-export type InventoryIdFormatUpdateBody = z.infer<typeof InventoryIdFormatUpdateSchema>;
-
 export const InventoryToDeleteSchema = z.object({
     id: z.string().min(1),
     version: z.coerce.number().int().min(1),
@@ -77,3 +52,18 @@ export const DeleteInventoriesBodySchema = z.object({
 });
 
 export type DeleteInventoriesBody = z.infer<typeof DeleteInventoriesBodySchema>;
+
+export const InventoryAccessEntrySchema = z.object(
+  {
+    userId: z.string(),
+    inventoryRole: z.enum(InventoryRole),
+  }
+);
+
+export type InventoryAccessEntry = z.infer<typeof InventoryAccessEntrySchema>;
+
+export const UpsertAccessBodySchema = z.object({
+  accesses: z.array(InventoryAccessEntrySchema).min(1).max(200),
+});
+
+export type UpsertAccessBody = z.infer<typeof UpsertAccessBodySchema>;

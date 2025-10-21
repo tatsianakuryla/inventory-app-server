@@ -1,19 +1,21 @@
 import prisma from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
-import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
-import type {
-  InventoryCreateRequest,
-  InventoryListQuery,
-  InventoryParameters,
-  DeleteInventoriesBody,
-  InventoryToDelete
+import { INVENTORY_SELECTED} from "../shared/constants/constants.ts";
+import {
+  type InventoryCreateRequest,
+  type InventoryListQuery,
+  type InventoryParameters,
+  type DeleteInventoriesBody,
+  type InventoryToDelete,
+  type InventoryAccessEntry,
+  type UpsertAccessBody
 } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
   isPrismaUniqueError,
   isPrismaVersionConflictError
 } from "../../shared/typeguards/typeguards.ts";
-import { Prisma, Role } from "@prisma/client";
+import { Prisma, Role, InventoryRole } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import type { Payload } from "../../users/controllers/types/controllers.types.ts";
 
@@ -186,7 +188,7 @@ export class InventoryController {
     results.forEach((result, index) => {
       (result.count === 1 ? deletedIds : conflictIds).push(allowed[index]!.id);
     });
-    const preSkippedIds = inventories.map((inventory) => inventory.id).filter((id) => !allowed.some(item => item.id === id));
+    const preSkippedIds = inventories.map((inventory) => inventory.id).filter((id) => !allowed.some((item) => item.id === id));
     return {
       deleted: deletedIds.length,
       deletedIds,
@@ -214,4 +216,76 @@ export class InventoryController {
     }
   }
 
+  public static updateInventoryAccess = async (
+    request: Request<InventoryParameters, {}, UpsertAccessBody>,
+    response: Response
+  ) => {
+    const { accesses } = request.body;
+    const inventoryId = request.params.inventoryId;
+    try {
+      const [inventory, currentAccess] = await prisma.$transaction([
+        prisma.inventory.findUnique({
+          where: { id: inventoryId },
+          select: { ownerId: true },
+        }),
+        prisma.inventoryAccess.findMany({
+          where: { inventoryId },
+          select: { userId: true, inventoryRole: true },
+        }),
+      ]);
+      if (!inventory) return response.status(404).json({ error: "Inventory not found" });
+      const { toCreate, toUpdate, unchanged, skippedInvalidOwnerUserIds } =
+        this.partitionAccessChanges(accesses, inventory.ownerId, currentAccess);
+      if (toCreate.length + toUpdate.length > 0) {
+        await prisma.$transaction([
+          ...toCreate.map((item) =>
+            prisma.inventoryAccess.upsert({
+              where: { inventoryId_userId: { inventoryId, userId: item.userId } },
+              create: { inventoryId, userId: item.userId, inventoryRole: item.inventoryRole },
+              update: { inventoryRole: item.inventoryRole },
+            })
+          ),
+          ...toUpdate.map((item) =>
+            prisma.inventoryAccess.upsert({
+              where: { inventoryId_userId: { inventoryId, userId: item.userId } },
+              create: { inventoryId, userId: item.userId, inventoryRole: item.inventoryRole },
+              update: { inventoryRole: item.inventoryRole },
+            })
+          ),
+        ]);
+      }
+      return response.json({
+        processed: accesses.length,
+        created: toCreate.length,
+        createdUserIds: toCreate.map(i => i.userId),
+        updated: toUpdate.length,
+        updatedUserIds: toUpdate.map(i => i.userId),
+        unchanged: unchanged.length,
+        unchangedUserIds: unchanged.map(i => i.userId),
+        skipped: skippedInvalidOwnerUserIds.length,
+        skippedInvalidOwnerUserIds,
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  };
+
+  private static partitionAccessChanges(
+    accesses: InventoryAccessEntry[],
+    ownerId: string,
+    currentAccess: InventoryAccessEntry[],
+  ) {
+    const skippedInvalidOwnerUserIds = accesses
+      .filter((access) => access.inventoryRole === InventoryRole.OWNER && access.userId !== ownerId)
+      .map((access) => access.userId);
+    const valid = accesses.filter((access) => !skippedInvalidOwnerUserIds.includes(access.userId));
+    const currentMap = new Map(currentAccess.map((access) => [access.userId, access.inventoryRole]));
+    const toCreate = valid.filter((access) => !currentMap.has(access.userId));
+    const toUpdate = valid.filter((access) => {
+      const previous = currentMap.get(access.userId);
+      return previous !== undefined && previous !== access.inventoryRole;
+    });
+    const unchanged = valid.filter((access) => currentMap.get(access.userId) === access.inventoryRole);
+    return { toCreate, toUpdate, unchanged, skippedInvalidOwnerUserIds };
+  }
 }

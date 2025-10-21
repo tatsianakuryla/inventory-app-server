@@ -23,3 +23,5 @@ export const FIELD_WHITELIST = new Set([
   "bool3State","bool3Name","bool3Desc","bool3ShowInTable",
   "displayOrder",
 ]);
+
+export const CAN_NOT_CHANGE_OWNER_MSG = 'It is impossible to change the owner';
