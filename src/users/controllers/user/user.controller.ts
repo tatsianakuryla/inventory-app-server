@@ -5,14 +5,15 @@ import {
   type LoginRequestBody,
   type RegisterRequestBody,
   type ResponseBody,
-  type UserBasic
+  type UserBasic,
+  type UpdateProfileRequest
 } from "../types/controllers.types.ts";
 import { Status, Role } from '@prisma/client';
 import { USER_SELECTED, SUPERADMINS } from "../../shared/constants/constants.ts";
 import { TokenController } from "../token/token.controller.ts";
 import { handleError, toAutocompleteOrderBy } from "../../shared/helpers/helpers.ts";
 import { Hash } from "../../security/Hash.ts";
-import { isPrismaUniqueError } from "../../../shared/typeguards/typeguards.ts";
+import { isPrismaUniqueError, isPrismaVersionConflictError } from "../../../shared/typeguards/typeguards.ts";
 
 export class UserController {
 
@@ -122,4 +123,31 @@ export class UserController {
       await prisma.user.update({ where: { id: user.id }, data: { role: Role.ADMIN } });
     }
   }
+
+  public static updateProfile = async (request: Request, response: Response): Promise<Response> => {
+    try {
+      const userId = request.user!.sub;
+      const { version, ...updateData } = request.body as UpdateProfileRequest;
+      const updated = await prisma.user.update({
+        where: { id: userId, version },
+        data: {
+          ...(updateData.name !== undefined && { name: updateData.name }),
+          ...(updateData.language !== undefined && { language: updateData.language }),
+          ...(updateData.theme !== undefined && { theme: updateData.theme }),
+          version: { increment: 1 },
+        },
+        select: USER_SELECTED,
+      });
+      return response.json({
+        ...updated,
+        createdAt: updated.createdAt.toISOString(),
+        updatedAt: updated.updatedAt.toISOString(),
+      });
+    } catch (error) {
+      if (isPrismaVersionConflictError(error)) {
+        return response.status(409).json({ error: "Version conflict. Please refresh and try again." });
+      }
+      return handleError(error, response);
+    }
+  };
 }

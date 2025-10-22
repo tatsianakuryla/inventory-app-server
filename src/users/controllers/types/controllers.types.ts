@@ -104,6 +104,15 @@ export const UpdateUsersResponseSchema = z.object({
 
 export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | ResponseError;
 
+export const UpdateProfileRequestSchema = z.object({
+    name: z.string().trim().min(1, "Name is required").max(100).optional(),
+    language: z.enum(Language).optional(),
+    theme: z.enum(Theme).optional(),
+    version: VersionSchema,
+});
+
+export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
+
 export interface UserForToken  {
     id: string;
     role: Role;
