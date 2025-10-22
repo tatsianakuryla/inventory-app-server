@@ -8,6 +8,7 @@ import { adminRouter } from "./src/users/router/adminRouter.ts"
 import type { ErrorRequestHandler  } from "express";
 import { inventoryRouter } from "./src/inventory/router/inventoryRouter.ts";
 import { ALLOWED_ORIGINS } from "./src/shared/constants/constants.ts";
+import { itemsRouter } from "./src/items/router/itemsRouter.ts";
 
 dotenv.config();
 const app = express();
@@ -31,6 +32,7 @@ app.use(express.json());
 app.use('/api/users', usersRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/inventory', inventoryRouter);
+app.use('/api/items', itemsRouter);
 
 app.get('/', (request, response) => {
     return response.json({ status: 'ok'});

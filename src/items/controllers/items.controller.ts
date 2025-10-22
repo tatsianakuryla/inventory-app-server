@@ -6,7 +6,6 @@ import type {
   ItemParameters,
   ItemListQuery,
   ItemCreateRequest,
-  ItemUpdateRequest,
   DeleteItemsBody
 } from "../shared/types/schemas.ts";
 import {
@@ -129,7 +128,7 @@ export class ItemsController {
   public static update = async (request: Request, response: Response) => {
     try {
       const { inventoryId, itemId } = request.params as ItemParameters;
-      const { version, ...patch } = request.body as ItemUpdateRequest;
+      const { version, ...patch } = request.body;
       if (patch.customId !== undefined) {
         return response.status(400).json({ error: "customId is immutable" });
       }
