@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { IdSchema } from "../../../shared/types/types.ts";
+import { Prisma, PrismaClient } from "@prisma/client";
 
-export const ItemParamsSchema = z.object({
+export const ItemParametersSchema = z.object({
   inventoryId: IdSchema,
   itemId: IdSchema.optional(),
 });
 
-export type ItemParams = z.infer<typeof ItemParamsSchema>;
+export type ItemParameters = z.infer<typeof ItemParametersSchema>;
 
 export const ItemListQuerySchema = z.object({
   search: z.string().trim().optional().default(""),
@@ -55,3 +56,5 @@ export const DeleteItemsBodySchema = z.object({
 });
 
 export type DeleteItemsBody = z.infer<typeof DeleteItemsBodySchema>;
+
+export type PrismaTransaction = PrismaClient | Prisma.TransactionClient;

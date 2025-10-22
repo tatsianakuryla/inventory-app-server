@@ -76,12 +76,13 @@ model Inventory {
   updatedAt DateTime @updatedAt
   version   Int      @default(1)
 
-  access            InventoryAccess[]
-  items             Item[]
-  discussions       DiscussionPost[]
-  tags              InventoryTag[]
-  fields            InventoryFields?
-  InventoryIdFormat InventoryIdFormat?
+  access             InventoryAccess[]
+  items              Item[]
+  discussions        DiscussionPost[]
+  tags               InventoryTag[]
+  fields             InventoryFields?
+  InventoryIdFormat  InventoryIdFormat?
+  InventoryIdCounter InventoryIdCounter[]
 
   @@unique([id, version])
   @@index([ownerId])
@@ -191,6 +192,20 @@ model InventoryAccess {
   @@index([inventoryId, inventoryRole])
 }
 
+model InventoryIdCounter {
+  id          String   @id @default(cuid())
+  inventoryId String
+  scopeKey    String
+  value       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inventory Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryId, scopeKey])
+  @@index([inventoryId])
+}
+
 model Category {
   id          Int         @id @default(autoincrement())
   name        String      @unique
@@ -218,7 +233,7 @@ model Item {
   inventoryId String
   inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
 
-  customId    String
+  customId    String   @db.VarChar(96)
   createdById String
   createdBy   User     @relation(fields: [createdById], references: [id])
   createdAt   DateTime @default(now())
@@ -251,6 +266,7 @@ model Item {
   @@unique([id, version], name: "id_version")
   @@index([inventoryId])
   @@index([id, version])
+  @@index([inventoryId, createdAt])
 }
 
 model ItemLike {
@@ -282,4 +298,6 @@ model InventoryIdFormat {
   schema      Json
   updatedAt   DateTime  @updatedAt
   version     Int       @default(1)
+
+  @@index([updatedAt])
 }
