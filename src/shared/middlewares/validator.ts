@@ -5,7 +5,7 @@ import { isZodError } from "../typeguards/typeguards.ts";
 export class Validator {
 
   public static requestBodyValidate(schema: z.ZodSchema) {
-    return (request: Request, response: Response, next: NextFunction,) => {
+    return (request: Request, response: Response, next: NextFunction) => {
       try {
         request.body = schema.parse(request.body);
         return next();

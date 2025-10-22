@@ -4,7 +4,7 @@ import { Prisma, PrismaClient } from "@prisma/client";
 
 export const ItemParametersSchema = z.object({
   inventoryId: IdSchema,
-  itemId: IdSchema.optional(),
+  itemId: IdSchema,
 });
 
 export type ItemParameters = z.infer<typeof ItemParametersSchema>;
