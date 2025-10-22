@@ -248,6 +248,7 @@ model Item {
   likes ItemLike[]
 
   @@unique([inventoryId, customId])
+  @@unique([id, version], name: "id_version")
   @@index([inventoryId])
   @@index([id, version])
 }

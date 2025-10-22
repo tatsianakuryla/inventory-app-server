@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { InventoryRole, Role, Prisma } from "@prisma/client";
-import { IdSchema } from '../../../users/controllers/types/controllers.types.ts';
+import { IdSchema } from "../../../shared/types/types.ts";
 export type UserContext = { id: string | null; role: Role } | undefined;
 
 export const InventoryParametersSchema = z.object({
