@@ -34,4 +34,16 @@ export class Validator {
     }
     next(error);
   }
+
+  public static requestParamsValidate(schema: z.ZodSchema): RequestHandler {
+    return (request: Request, response: Response, next: NextFunction) => {
+      try {
+        const parsed = schema.parse(request.params);
+        Object.assign(request.params, parsed);
+        return next();
+      } catch (error) {
+        this.handleError(error, response, next);
+      }
+    }
+  }
 }

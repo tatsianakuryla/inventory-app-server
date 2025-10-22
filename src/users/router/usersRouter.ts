@@ -11,7 +11,7 @@ import { FacebookLoginSchema, GoogleLoginSchema } from "../controllers/social/so
 import { SocialController } from "../controllers/social/social.controller.ts";
 export const usersRouter = express.Router();
 
-usersRouter.get('me', requireAuthAndNotBlocked, UserController.getMe);
+usersRouter.get('/me', requireAuthAndNotBlocked, UserController.getMe);
 
 usersRouter.get('/autocomplete',
   requireAuthAndNotBlocked,

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
-import { InventoryAccessService } from "../../inventoryAccessService/inventoryAccessService.ts";
-import { buildUserContext } from "../helpers/helpers.ts";
-import type { InventoryParameters } from "../types/schemas.ts";
+import type { InventoryParameters } from "../../../inventory/shared/types/schemas.ts";
+import { buildUserContext } from "../../../inventory/shared/helpers/helpers.ts";
+import { InventoryAccessService } from "../../../inventory/inventoryAccessService/inventoryAccessService.ts";
 
 export async function requireCanEditItems(request: Request<InventoryParameters>, response: Response, next: NextFunction) {
   try {
