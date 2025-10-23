@@ -9,6 +9,7 @@ import type { ErrorRequestHandler  } from "express";
 import { inventoryRouter } from "./src/inventory/router/inventoryRouter.ts";
 import { ALLOWED_ORIGINS } from "./src/shared/constants/constants.ts";
 import { itemsRouter } from "./src/items/router/itemsRouter.ts";
+import { categoriesRouter } from "./src/categories/router/categoriesRouter.ts";
 
 dotenv.config();
 const app = express();
@@ -19,7 +20,7 @@ app.use(cors({
         if (!origin || ALLOWED_ORIGINS.includes(origin)) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowedIds by CORS'));
+            callback(new Error('Not allowed by CORS'));
         }
     },
     credentials: true,
@@ -33,6 +34,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/items', itemsRouter);
+app.use('/api/categories', categoriesRouter);
 
 app.get('/', (request, response) => {
     return response.json({ status: 'ok'});

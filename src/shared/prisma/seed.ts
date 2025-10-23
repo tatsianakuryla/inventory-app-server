@@ -1,6 +1,7 @@
 import prisma from "../db/db.ts";
 import { Role } from "@prisma/client";
 import { SUPERADMINS } from "../../users/shared/constants/constants.ts";
+import { seedCategories } from "./seedCategories.ts";
 type PickedUser = { email: string; id: string; role: Role };
 
 async function getExistingAdmins(): Promise<PickedUser[]> {
@@ -13,6 +14,7 @@ async function getExistingAdmins(): Promise<PickedUser[]> {
 }
 
 export async function seed(): Promise<void> {
+  await seedCategories();
   const existing = await getExistingAdmins();
   const emails = existing.map((user: PickedUser) => user.email);
   if (existing.length === 0) return;
