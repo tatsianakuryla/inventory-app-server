@@ -12,6 +12,7 @@ import { itemsRouter } from "./src/items/router/itemsRouter.ts";
 import { categoriesRouter } from "./src/categories/router/categoriesRouter.ts";
 import { tagsRouter } from "./src/tags/router/tagsRouter.ts";
 import { discussionsRouter } from "./src/discussions/router/discussionsRouter.ts";
+import { homeRouter } from "./src/home/router/homeRouter.ts";
 
 dotenv.config();
 const app = express();
@@ -41,6 +42,7 @@ app.use("/api/items", itemsRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/tags", tagsRouter);
 app.use("/api/discussions", discussionsRouter);
+app.use("/api/home", homeRouter);
 
 app.get("/", (request, response) => {
   return response.json({ status: "ok" });
