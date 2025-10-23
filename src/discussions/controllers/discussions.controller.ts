@@ -2,13 +2,14 @@ import type { Request, Response } from "express";
 import prisma from "../../shared/db/db.ts";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { Role } from "@prisma/client";
-import type { InventoryParameters, DiscussionIdParameters } from "../shared/types/schemas.ts";
+import type { InventoryParameters, DiscussionIdParameters, DiscussionsQuery, DiscussionCreate } from "../shared/types/schemas.ts";
 
 export class DiscussionsController {
   public static getMany = async (request: Request, response: Response) => {
     try {
       const { inventoryId } = request.params as InventoryParameters;
-      const { page = 1, perPage = 20, order = "desc" } = response.locals.query ?? {};
+      const query = response.locals.query as DiscussionsQuery | undefined;
+      const { page = 1, perPage = 20, order = "desc" } = query ?? {};
       const finalPage = Math.max(1, page);
       const skip = (finalPage - 1) * perPage;
       const [items, total] = await prisma.$transaction([
@@ -51,8 +52,8 @@ export class DiscussionsController {
   public static create = async (request: Request, response: Response) => {
     try {
       const { inventoryId } = request.params as InventoryParameters;
-      const { textMd } = request.body;
-      const authorId = request.user!.sub;
+      const { textMd } = request.body as DiscussionCreate;
+      const authorId = request.user.sub;
       const inventory = await prisma.inventory.findUnique({
         where: { id: inventoryId },
         select: { id: true },

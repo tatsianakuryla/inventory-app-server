@@ -9,14 +9,15 @@ import type {
   UpdateUserProfile,
   UpdateUsersRequest,
   UpdateUsersResponse, UserBasic,
-  UsersQuery
+  UsersQuery,
+  GetUsersResponse
 } from "../types/controllers.types.ts";
 
 export class AdminUsersController {
 
   public static getUsers = async (
     request: Request,
-    response: Response<any, { query: UsersQuery }>
+    response: Response<GetUsersResponse, { query: UsersQuery }>
   ) => {
     try {
       const {
@@ -88,7 +89,7 @@ export class AdminUsersController {
   }
 
   private static async updateStatus(
-    request: Request<{}, UpdateUsersResponse, UpdateUsersRequest>,
+    request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,
     response: Response<UpdateUsersResponse>,
     statusToUpdate: Status,
     message: string
@@ -131,24 +132,24 @@ export class AdminUsersController {
     }
   }
 
-  public static async block(request: Request, response: Response) {
+  public static async block(request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>, response: Response<UpdateUsersResponse>) {
     return this.updateStatus(request, response, Status.BLOCKED, 'blocked');
   }
 
-  public static async unblock(request: Request, response: Response) {
+  public static async unblock(request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>, response: Response<UpdateUsersResponse>) {
     return this.updateStatus(request, response, Status.ACTIVE, 'unblocked');
   }
 
-  public static async promote(request: Request, response: Response) {
+  public static async promote(request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>, response: Response<UpdateUsersResponse>) {
     return this.updateRole(request, response, Role.ADMIN);
   }
 
-  public static async demote(request: Request, response: Response) {
+  public static async demote(request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>, response: Response<UpdateUsersResponse>) {
     return this.updateRole(request, response, Role.USER);
   }
 
   public static async remove(
-    request: Request<{}, any, IdsBody>,
+    request: Request<Record<string, never>, Record<string, never>, IdsBody>,
     response: Response
   ) {
     try {
@@ -174,7 +175,7 @@ export class AdminUsersController {
   }
 
   private static async updateRole(
-    request: Request<{}, UpdateUsersResponse, UpdateUsersRequest>,
+    request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,
     response: Response<UpdateUsersResponse>,
     targetRole: Role,
   ): Promise<Response<UpdateUsersResponse>> {
@@ -225,7 +226,7 @@ export class AdminUsersController {
     return { allowedIds, preSkippedIds };
   }
 
-  private static async filterAllowedIdsForRoleUpdate(request: Request<{}, any, UpdateUsersRequest>, targetRole: Role): Promise<{allowedIds: string[], preSkippedIds: string[]}> {
+  private static async filterAllowedIdsForRoleUpdate(request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>, targetRole: Role): Promise<{allowedIds: string[], preSkippedIds: string[]}> {
     const requestItems: UpdateUsersRequest = request.body;
     const currentUserId = request.user?.sub ?? "";
     const fetchedUsers = await this.getUsersWithIds(requestItems.map((user) => user.id));

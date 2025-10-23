@@ -36,7 +36,8 @@ export class UserController {
 
   public static autocompleteGetUsers = async (request: Request, response: Response) => {
     try {
-      const { search, sortBy = 'name', order = 'asc', limit = 10 }: AutocompleteQuery = response.locals.query;
+      const query = response.locals.query as AutocompleteQuery | undefined;
+      const { search, sortBy = 'name', order = 'asc', limit = 10 } = query || { search: '' };
       const orderBy = toAutocompleteOrderBy(sortBy, order);
       const items = await prisma.user.findMany({
         where: {
@@ -56,7 +57,7 @@ export class UserController {
     }
   };
 
-  public static register = async (request: Request<{}, ResponseBody, RegisterRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
+  public static register = async (request: Request<Record<string, never>, ResponseBody, RegisterRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
     try {
       const newUser = await this.createNewUserFromRequest(request);
       return response.status(201).json(newUser);
@@ -68,7 +69,7 @@ export class UserController {
     }
   }
 
-  private static async createNewUserFromRequest(request: Request<{}, ResponseBody, RegisterRequestBody>): Promise<ResponseBody> {
+  private static async createNewUserFromRequest(request: Request<Record<string, never>, ResponseBody, RegisterRequestBody>): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
     const role: Role = SUPERADMINS.has(EmailSchema.parse(email)) ? Role.ADMIN : Role.USER;
@@ -89,7 +90,7 @@ export class UserController {
     }
   }
 
-  public static login = async (request: Request<{}, ResponseBody, LoginRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
+  public static login = async (request: Request<Record<string, never>, ResponseBody, LoginRequestBody>, response: Response<ResponseBody>): Promise<Response<ResponseBody>> => {
     try {
       const { email, password } = request.body;
       const user = await prisma.user.findUnique({
@@ -126,7 +127,7 @@ export class UserController {
 
   public static updateProfile = async (request: Request, response: Response): Promise<Response> => {
     try {
-      const userId = request.user!.sub;
+      const userId = request.user.sub;
       const { version, ...updateData } = request.body as UpdateProfileRequest;
       const updated = await prisma.user.update({
         where: { id: userId, version },

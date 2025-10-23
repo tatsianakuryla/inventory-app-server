@@ -6,6 +6,7 @@ import type {
   ItemParameters,
   ItemListQuery,
   ItemCreateRequest,
+  ItemUpdateRequest,
   DeleteItemsBody
 } from "../shared/types/schemas.ts";
 import {
@@ -87,7 +88,7 @@ export class ItemsController {
     try {
       const { inventoryId } = request.params as Pick<ItemParameters, "inventoryId">;
       const body = request.body as ItemCreateRequest;
-      const createdById = request.user!.sub;
+      const createdById = request.user.sub;
       const MAX_RETRIES = 3;
       for (let i = 0; i < MAX_RETRIES; i++) {
         try {
@@ -128,7 +129,8 @@ export class ItemsController {
   public static update = async (request: Request, response: Response) => {
     try {
       const { inventoryId, itemId } = request.params as ItemParameters;
-      const { version, ...patch } = request.body;
+      const body = request.body as ItemUpdateRequest;
+      const { version, ...patch } = body;
       if (patch.customId !== undefined) {
         return response.status(400).json({ error: "customId is immutable" });
       }
@@ -190,7 +192,7 @@ export class ItemsController {
   public static like = async (request: Request, response: Response) => {
     try {
       const { itemId } = request.params as ItemParameters;
-      const userId = request.user!.sub;
+      const userId = request.user.sub;
       await prisma.itemLike.create({ data: { itemId, userId } });
       return response.status(204).end();
     } catch (error) {
@@ -202,7 +204,7 @@ export class ItemsController {
   public static unlike = async (request: Request, response: Response) => {
     try {
       const { itemId } = request.params as ItemParameters;
-      const userId = request.user!.sub;
+      const userId = request.user.sub;
       await prisma.itemLike.delete({ where: { itemId_userId: { itemId, userId } } });
       return response.status(204).end();
     } catch (error) {

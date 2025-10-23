@@ -1,16 +1,18 @@
 import { randomUUID, randomInt } from "crypto";
 import type { PrismaTransaction } from "../shared/types/schemas.ts";
 
-enum IdElementType {
-  FIXED_TEXT = "FIXED_TEXT",
-  RANDOM_20BIT = "RANDOM_20BIT",
-  RANDOM_32BIT = "RANDOM_32BIT",
-  RANDOM_6DIGIT = "RANDOM_6DIGIT",
-  RANDOM_9DIGIT = "RANDOM_9DIGIT",
-  GUID = "GUID",
-  DATETIME = "DATETIME",
-  SEQUENCE = "SEQUENCE",
-}
+const IdElementType = {
+  FIXED_TEXT: "FIXED_TEXT",
+  RANDOM_20BIT: "RANDOM_20BIT",
+  RANDOM_32BIT: "RANDOM_32BIT",
+  RANDOM_6DIGIT: "RANDOM_6DIGIT",
+  RANDOM_9DIGIT: "RANDOM_9DIGIT",
+  GUID: "GUID",
+  DATETIME: "DATETIME",
+  SEQUENCE: "SEQUENCE",
+} as const;
+
+type IdElementType = (typeof IdElementType)[keyof typeof IdElementType];
 
 interface IdElement {
   type: IdElementType;
@@ -26,7 +28,6 @@ interface CustomIdFormatSchema {
 }
 
 export class CustomIdService {
-
   public static async generate(tx: PrismaTransaction, inventoryId: string): Promise<string> {
     const idFormat = await tx.inventoryIdFormat.findUnique({
       where: { inventoryId },
@@ -56,7 +57,7 @@ export class CustomIdService {
     tx: PrismaTransaction,
     inventoryId: string,
     element: IdElement,
-    now: Date
+    now: Date,
   ): Promise<string> {
     switch (element.type) {
       case IdElementType.FIXED_TEXT:
@@ -111,17 +112,26 @@ export class CustomIdService {
     const mi = String(now.getUTCMinutes()).padStart(2, "0");
     const ss = String(now.getUTCSeconds()).padStart(2, "0");
     switch (format) {
-      case "ISO":       return now.toISOString();
-      case "timestamp": return String(now.getTime());
-      case "YYYY":      return yyyy;
-      case "YYYY-MM":   return `${yyyy}-${mm}`;
-      case "YYYYMM":    return `${yyyy}${mm}`;
-      case "YYYY-MM-DD":return `${yyyy}-${mm}-${dd}`;
-      case "YYYYMMDD":  return `${yyyy}${mm}${dd}`;
-      case "HH:MM:SS":  return `${hh}:${mi}:${ss}`;
-      case "HHMMSS":    return `${hh}${mi}${ss}`;
-      default:          return `${yyyy}${mm}${dd}`;
+      case "ISO":
+        return now.toISOString();
+      case "timestamp":
+        return String(now.getTime());
+      case "YYYY":
+        return yyyy;
+      case "YYYY-MM":
+        return `${yyyy}-${mm}`;
+      case "YYYYMM":
+        return `${yyyy}${mm}`;
+      case "YYYY-MM-DD":
+        return `${yyyy}-${mm}-${dd}`;
+      case "YYYYMMDD":
+        return `${yyyy}${mm}${dd}`;
+      case "HH:MM:SS":
+        return `${hh}:${mi}:${ss}`;
+      case "HHMMSS":
+        return `${hh}${mi}${ss}`;
+      default:
+        return `${yyyy}${mm}${dd}`;
     }
   }
 }
-

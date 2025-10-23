@@ -18,7 +18,7 @@ import { fbDebugUrl, fbProfileUrl}  from "./social.constants.ts";
 export class SocialController {
 
   public static async googleLogin(
-    request: Request<{}, ResponseBody, GoogleLoginBody>,
+    request: Request<Record<string, never>, ResponseBody, GoogleLoginBody>,
     response: Response<ResponseBody>
   ): Promise<Response<ResponseBody>> {
     try {
@@ -33,8 +33,8 @@ export class SocialController {
       if (!email || payload.email_verified !== true) {
         return response.status(400).json({ error: "Google email missing or not verified" });
       }
-      const displayName = payload.name?.trim() || email.split("@")[0] || "User";
-      const user = await this.findOrCreateUserByProvider("google", payload.sub!, email, displayName);
+      const displayName = payload.name?.trim() || email.split("@")[0]! || "User";
+      const user = await this.findOrCreateUserByProvider("google", payload.sub, email, displayName);
       return this.respondWithAuth(response, user);
     } catch {
       return response.status(401).json({ error: "Google auth failed" });
@@ -42,7 +42,7 @@ export class SocialController {
   }
 
   public static async facebookLogin(
-    request: Request<{}, ResponseBody, FacebookLoginBody>,
+    request: Request<Record<string, never>, ResponseBody, FacebookLoginBody>,
     response: Response<ResponseBody>
   ): Promise<Response<ResponseBody>> {
     try {
@@ -55,11 +55,11 @@ export class SocialController {
         return response.status(401).json({ error: "Facebook token app mismatch" });
       }
       const profile = await this.getFbProfileUrl(accessToken);
-      const fbId: string | undefined = profile?.id;
-      const email = EmailSchema.parse(profile?.email || '');
+      const fbId = profile.id;
+      const email = EmailSchema.parse(profile.email || '');
       if (!fbId) return response.status(401).json({ error: "Facebook profile read failed" });
       if (!email) return response.status(400).json({ error: "Facebook email not granted" });
-      const displayName = profile?.name?.trim() || email.split("@")[0] || "User";
+      const displayName = profile?.name?.trim() || email.split("@")[0]! || "User";
       const user = await this.findOrCreateUserByProvider("facebook", fbId, email, displayName);
       return this.respondWithAuth(response, user);
     } catch {
@@ -67,16 +67,16 @@ export class SocialController {
     }
   }
 
-  private static async getFbDebugJson(accessToken: string) {
+  private static async getFbDebugJson(accessToken: string): Promise<{ data?: { is_valid?: boolean; app_id?: string } }> {
     const appAccessToken = `${process.env.FACEBOOK_APP_ID}|${process.env.FACEBOOK_APP_SECRET}`;
     const newDebugURL = new URL(fbDebugUrl);
     newDebugURL.searchParams.set("input_token", accessToken);
     newDebugURL.searchParams.set("access_token", appAccessToken);
     const response = await fetch(newDebugURL.toString());
-    return await response.json();
+    return await response.json() as { data?: { is_valid?: boolean; app_id?: string } };
   }
 
-  private static async getFbProfileUrl(accessToken: string) {
+  private static async getFbProfileUrl(accessToken: string): Promise<{ id?: string; name?: string; email?: string }> {
     const newFbProfileUrl = new URL(fbProfileUrl);
     newFbProfileUrl.searchParams.set("fields", "id,name,email");
     newFbProfileUrl.searchParams.set("access_token", accessToken);
@@ -85,7 +85,7 @@ export class SocialController {
       Hash.makeAppSecretProof(accessToken, process.env.FACEBOOK_APP_SECRET!)
     );
     const response = await fetch(newFbProfileUrl.toString());
-    return await response.json();
+    return await response.json() as { id?: string; name?: string; email?: string };
   }
 
   private static async findOrCreateUserByProvider(

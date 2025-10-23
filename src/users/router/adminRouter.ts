@@ -11,33 +11,33 @@ adminRouter.get("/",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestQueryValidate(UsersQuerySchema),
-  AdminUsersController.getUsers);
+  (req, res) => AdminUsersController.getUsers(req, res));
 adminRouter.post("/users/block",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  AdminUsersController.block);
+  (req, res) => AdminUsersController.block(req, res));
 
 adminRouter.post("/users/unblock",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  AdminUsersController.unblock);
+  (req, res) => AdminUsersController.unblock(req, res));
 
 adminRouter.post("/users/promote",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  AdminUsersController.promote);
+  (req, res) => AdminUsersController.promote(req, res));
 
 adminRouter.post("/users/demote",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  AdminUsersController.demote);
+  (req, res) => AdminUsersController.demote(req, res));
 
 adminRouter.delete("/users",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  AdminUsersController.remove);
+  (req, res) => AdminUsersController.remove(req, res));

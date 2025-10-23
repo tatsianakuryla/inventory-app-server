@@ -2,18 +2,19 @@ import type { Request, Response } from "express";
 import prisma from "../../shared/db/db.ts";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
-import type { CategoryParameters } from "../shared/types/schemas.ts";
+import type { CategoryParameters, CategoryQuery, CategoryCreate, CategoryUpdate } from "../shared/types/schemas.ts";
 
 export class CategoryController {
-  public static getAll = async (request: Request, response: Response) => {
+  public static getAll = async (_request: Request, response: Response) => {
     try {
+      const query = response.locals.query as CategoryQuery;
       const {
         search = "",
         page = 1,
         perPage = 20,
         sortBy = "name",
         order = "asc",
-      } = response.locals.query ?? {};
+      } = query ?? {};
       const finalPage = Math.max(1, Number(page) || 1);
       const take = Math.max(1, Number(perPage) || 20);
       const skip = (finalPage - 1) * take;
@@ -37,7 +38,7 @@ export class CategoryController {
     }
   };
 
-  public static getStats = async (request: Request, response: Response) => {
+  public static getStats = async (_request: Request, response: Response) => {
     try {
       const categories = await prisma.category.findMany({
         orderBy: { name: "asc" },
@@ -62,7 +63,7 @@ export class CategoryController {
 
   public static create = async (request: Request, response: Response) => {
     try {
-      const { name } = request.body;
+      const { name } = request.body as CategoryCreate;
       const created = await prisma.category.create({
         data: { name },
       });
@@ -78,7 +79,7 @@ export class CategoryController {
   public static update = async (request: Request, response: Response) => {
     try {
       const { categoryId } = request.params as unknown as CategoryParameters;
-      const { name } = request.body;
+      const { name } = request.body as CategoryUpdate;
       const updated = await prisma.category.update({
         where: { id: categoryId },
         data: { name },

@@ -3,7 +3,6 @@ import type { Request, Response } from "express";
 import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
 import type {
   InventoryCreateRequest,
-  InventoryListQuery,
   InventoryParameters,
   DeleteInventoriesBody,
   InventoryToDelete,
@@ -11,24 +10,28 @@ import type {
   UpsertAccessBody,
   RevokeAccessBody,
   UpdateInventoryFieldsBody,
-  InventoryIdFormatUpdateBody
+  InventoryIdFormatUpdateBody,
 } from "../shared/types/schemas.ts";
+import type { InventoryListQuery } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
   isPrismaUniqueError,
-  isPrismaVersionConflictError
+  isPrismaVersionConflictError,
 } from "../../shared/typeguards/typeguards.ts";
 import { Prisma, Role, InventoryRole } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import type { Payload } from "../../users/controllers/types/controllers.types.ts";
-import { isFieldKey, type WritableFields, type WritableKey } from "../shared/typeguards/typeguards.ts";
-import {VERSION_CONFLICT_ERROR_MESSAGE} from "../../shared/constants/constants.js";
+import {
+  isFieldKey,
+  type WritableFields,
+  type WritableKey,
+} from "../shared/typeguards/typeguards.ts";
+import { VERSION_CONFLICT_ERROR_MESSAGE } from "../../shared/constants/constants.ts";
 
 export class InventoryController {
-
   public static create = async (
-    request: Request<{}, {}, InventoryCreateRequest>,
-    response: Response
+    request: Request<Record<string, never>, Record<string, never>, InventoryCreateRequest>,
+    response: Response,
   ) => {
     try {
       const { name, description, isPublic, imageUrl, categoryId } = request.body;
@@ -48,63 +51,59 @@ export class InventoryController {
       });
       return response.status(201).json(created);
     } catch (error: unknown) {
-        if (isPrismaUniqueError(error)) {
-          return response.status(409).json({ error: "Inventory already exists" });
-        }
-        if (isPrismaForeignKeyError(error)) {
-          return response.status(400).json({ error: "Invalid categoryId" });
-        }
-      return handleError(error, response);
+      if (isPrismaUniqueError(error)) {
+        return response.status(409).json({ error: "Inventory already exists" });
       }
-  }
+      if (isPrismaForeignKeyError(error)) {
+        return response.status(400).json({ error: "Invalid categoryId" });
+      }
+      return handleError(error, response);
+    }
+  };
 
-  public static getAll = async (
-    request: Request,
-    response: Response<{}, { query: InventoryListQuery }>
-  ) => {
-      const {
-        search = "",
-        page = 1,
-        perPage = 20,
-        sortBy = "createdAt",
-        order = "desc",
-      } = response.locals.query;
-      const finalPage = Math.max(1, page);
-      const skip = (finalPage - 1) * perPage;
-      const where = this.buildSearchWhere(request, search);
-      const [items, total] = await prisma.$transaction([
-        prisma.inventory.findMany({
-          where,
-          skip,
-          take: perPage,
-          orderBy: { [sortBy]: order },
-          select: INVENTORY_SELECTED,
-        }),
-        prisma.inventory.count({ where }),
-      ]);
-      const hasMore = skip + items.length < total;
-      return response.json({ items, total, page: finalPage, perPage, hasMore });
-  }
+  public static getAll = async (request: Request, response: Response) => {
+    const query = response.locals.query as InventoryListQuery;
+    const {
+      search = "",
+      page = 1,
+      perPage = 20,
+      sortBy = "createdAt",
+      order = "desc",
+    } = query;
+    const finalPage = Math.max(1, page);
+    const skip = (finalPage - 1) * perPage;
+    const where = this.buildSearchWhere(request, search);
+    const [items, total] = await prisma.$transaction([
+      prisma.inventory.findMany({
+        where,
+        skip,
+        take: perPage,
+        orderBy: { [sortBy]: order },
+        select: INVENTORY_SELECTED,
+      }),
+      prisma.inventory.count({ where }),
+    ]);
+    const hasMore = skip + items.length < total;
+    return response.json({ items, total, page: finalPage, perPage, hasMore });
+  };
 
   private static buildSearchWhere(request: Request, search: string): Prisma.InventoryWhereInput {
     const searchWhere: Prisma.InventoryWhereInput = search
       ? {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { description: { contains: search, mode: "insensitive" } },
-        ],
-      }
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+          ],
+        }
       : {};
     const me = request.user ? { id: request.user.sub, role: request.user.role } : undefined;
     const visibilityWhere: Prisma.InventoryWhereInput =
       me?.role === Role.ADMIN
         ? {}
         : me
-          ? { OR: [
-              { ownerId: me.id },
-              { isPublic: true },
-              { access: { some: { userId: me.id } } },
-            ] }
+          ? {
+              OR: [{ ownerId: me.id }, { isPublic: true }, { access: { some: { userId: me.id } } }],
+            }
           : { isPublic: true };
     return {
       AND: [searchWhere, visibilityWhere],
@@ -125,18 +124,27 @@ export class InventoryController {
       },
     });
     if (!inventory) return response.status(404).json({ error: "Not found" });
-    const canView = me?.role === Role.ADMIN
-      || inventory.isPublic
-      || me?.id === inventory.ownerId
-      || inventory.access.some((access) => access.userId === me?.id);
+    const canView =
+      me?.role === Role.ADMIN ||
+      inventory.isPublic ||
+      me?.id === inventory.ownerId ||
+      inventory.access.some((access) => access.userId === me?.id);
     if (!canView) return response.status(403).json({ error: "Forbidden" });
-    const { access, ownerId, ...safe } = inventory;
+    const { access: _access, ownerId: _ownerId, ...safe } = inventory;
     return response.json(safe);
-  }
+  };
 
   public static update = async (request: Request<InventoryParameters>, response: Response) => {
     try {
-      const { version, name, description, isPublic, imageUrl, categoryId } = request.body;
+      const body = request.body as {
+        version: number;
+        name?: string;
+        description?: string | null;
+        isPublic?: boolean;
+        imageUrl?: string | null;
+        categoryId?: number | null;
+      };
+      const { version, name, description, isPublic, imageUrl, categoryId } = body;
       const updated = await prisma.inventory.update({
         where: { id_version: { id: request.params.inventoryId, version } },
         data: {
@@ -151,15 +159,17 @@ export class InventoryController {
       });
       return response.json(updated);
     } catch (error: unknown) {
-      if (isPrismaVersionConflictError(error)) return response.status(409).json({error: "Version conflict"});
-      if (isPrismaForeignKeyError(error)) return response.status(400).json({error: "Invalid categoryId"});
+      if (isPrismaVersionConflictError(error))
+        return response.status(409).json({ error: "Version conflict" });
+      if (isPrismaForeignKeyError(error))
+        return response.status(400).json({ error: "Invalid categoryId" });
       return handleError(error, response);
     }
-  }
+  };
 
   public static removeMany = async (
-    request: Request<{}, {}, DeleteInventoriesBody>,
-    response: Response
+    request: Request<Record<string, never>, Record<string, never>, DeleteInventoriesBody>,
+    response: Response,
   ) => {
     try {
       const me = request.user;
@@ -168,14 +178,14 @@ export class InventoryController {
       let allowed = inventories;
       if (!isAdmin) allowed = await this.getAllowedToRemove(inventories, me);
       const deleteOperations = allowed.map(({ id, version }) =>
-        prisma.inventory.deleteMany({ where: { id, version } })
+        prisma.inventory.deleteMany({ where: { id, version } }),
       );
       const results = deleteOperations.length ? await prisma.$transaction(deleteOperations) : [];
       return response.json(this.filterDeletedSkippedIds(results, allowed, inventories));
     } catch (error) {
       return handleError(error, response);
     }
-  }
+  };
 
   private static async getAllowedToRemove(inventories: InventoryToDelete[], me: Payload) {
     const ids = inventories.map((inventory) => inventory.id);
@@ -183,17 +193,25 @@ export class InventoryController {
       where: { id: { in: ids } },
       select: { id: true, ownerId: true },
     });
-    const ownerSet = new Set(owners.filter((owner) => owner.ownerId === me.sub).map((owner) => owner.id));
+    const ownerSet = new Set(
+      owners.filter((owner) => owner.ownerId === me.sub).map((owner) => owner.id),
+    );
     return inventories.filter((inventory) => ownerSet.has(inventory.id));
   }
 
-  private static filterDeletedSkippedIds(results: Prisma.BatchPayload[], inventories: InventoryToDelete[], allowed: InventoryToDelete[], ) {
+  private static filterDeletedSkippedIds(
+    results: Prisma.BatchPayload[],
+    inventories: InventoryToDelete[],
+    allowed: InventoryToDelete[],
+  ) {
     const deletedIds: string[] = [];
     const conflictIds: string[] = [];
     results.forEach((result, index) => {
       (result.count === 1 ? deletedIds : conflictIds).push(allowed[index]!.id);
     });
-    const preSkippedIds = inventories.map((inventory) => inventory.id).filter((id) => !allowed.some((item) => item.id === id));
+    const preSkippedIds = inventories
+      .map((inventory) => inventory.id)
+      .filter((id) => !allowed.some((item) => item.id === id));
     return {
       deleted: deletedIds.length,
       deletedIds,
@@ -201,10 +219,13 @@ export class InventoryController {
       conflictIds,
       skipped: preSkippedIds.length,
       skippedIds: preSkippedIds,
-    }
+    };
   }
 
-  public static getAccessData = async (request: Request<InventoryParameters>, response: Response) => {
+  public static getAccessData = async (
+    request: Request<InventoryParameters>,
+    response: Response,
+  ) => {
     try {
       const accessData = await prisma.inventoryAccess.findMany({
         where: { inventoryId: request.params.inventoryId },
@@ -219,11 +240,11 @@ export class InventoryController {
     } catch (error) {
       return handleError(error, response);
     }
-  }
+  };
 
   public static updateInventoryAccess = async (
-    request: Request<InventoryParameters, {}, UpsertAccessBody>,
-    response: Response
+    request: Request<InventoryParameters, Record<string, never>, UpsertAccessBody>,
+    response: Response,
   ) => {
     const { accesses } = request.body;
     const inventoryId = request.params.inventoryId;
@@ -248,25 +269,25 @@ export class InventoryController {
               where: { inventoryId_userId: { inventoryId, userId: item.userId } },
               create: { inventoryId, userId: item.userId, inventoryRole: item.inventoryRole },
               update: { inventoryRole: item.inventoryRole },
-            })
+            }),
           ),
           ...toUpdate.map((item) =>
             prisma.inventoryAccess.upsert({
               where: { inventoryId_userId: { inventoryId, userId: item.userId } },
               create: { inventoryId, userId: item.userId, inventoryRole: item.inventoryRole },
               update: { inventoryRole: item.inventoryRole },
-            })
+            }),
           ),
         ]);
       }
       return response.json({
         processed: accesses.length,
         created: toCreate.length,
-        createdUserIds: toCreate.map(i => i.userId),
+        createdUserIds: toCreate.map((i) => i.userId),
         updated: toUpdate.length,
-        updatedUserIds: toUpdate.map(i => i.userId),
+        updatedUserIds: toUpdate.map((i) => i.userId),
         unchanged: unchanged.length,
-        unchangedUserIds: unchanged.map(i => i.userId),
+        unchangedUserIds: unchanged.map((i) => i.userId),
         skipped: skippedInvalidOwnerUserIds.length,
         skippedInvalidOwnerUserIds,
       });
@@ -284,19 +305,23 @@ export class InventoryController {
       .filter((access) => access.inventoryRole === InventoryRole.OWNER && access.userId !== ownerId)
       .map((access) => access.userId);
     const valid = accesses.filter((access) => !skippedInvalidOwnerUserIds.includes(access.userId));
-    const currentMap = new Map(currentAccess.map((access) => [access.userId, access.inventoryRole]));
+    const currentMap = new Map(
+      currentAccess.map((access) => [access.userId, access.inventoryRole]),
+    );
     const toCreate = valid.filter((access) => !currentMap.has(access.userId));
     const toUpdate = valid.filter((access) => {
       const previous = currentMap.get(access.userId);
       return previous !== undefined && previous !== access.inventoryRole;
     });
-    const unchanged = valid.filter((access) => currentMap.get(access.userId) === access.inventoryRole);
+    const unchanged = valid.filter(
+      (access) => currentMap.get(access.userId) === access.inventoryRole,
+    );
     return { toCreate, toUpdate, unchanged, skippedInvalidOwnerUserIds };
   }
 
   public static deleteAccess = async (
-    request: Request<InventoryParameters, {}, RevokeAccessBody>,
-    response: Response
+    request: Request<InventoryParameters, Record<string, never>, RevokeAccessBody>,
+    response: Response,
   ) => {
     try {
       const { inventoryId } = request.params;
@@ -312,11 +337,11 @@ export class InventoryController {
         }),
       ]);
       if (!inventory) return response.status(404).json({ error: "Inventory not found" });
-      const {
-        toDeleteUserIds,
-        skippedOwnerUserIds,
-        notFoundUserIds,
-      } = this.partitionRevokedAccess(currentAccess, userIds, inventory.ownerId);
+      const { toDeleteUserIds, skippedOwnerUserIds, notFoundUserIds } = this.partitionRevokedAccess(
+        currentAccess,
+        userIds,
+        inventory.ownerId,
+      );
       let deleted = 0;
       if (toDeleteUserIds.length) {
         const result = await prisma.inventoryAccess.deleteMany({
@@ -340,7 +365,7 @@ export class InventoryController {
   private static partitionRevokedAccess(
     currentAccess: { userId: string }[],
     userIds: string[],
-    ownerId: string
+    ownerId: string,
   ) {
     const existingSet = new Set(currentAccess.map((access) => access.userId));
     const skippedOwnerUserIds = userIds.filter((id) => id === ownerId);
@@ -351,8 +376,8 @@ export class InventoryController {
   }
 
   public static updateInventoryFields = async (
-    request: Request<InventoryParameters, {}, UpdateInventoryFieldsBody>,
-    response: Response
+    request: Request<InventoryParameters, Record<string, never>, UpdateInventoryFieldsBody>,
+    response: Response,
   ) => {
     try {
       const { version, patch } = request.body;
@@ -373,13 +398,9 @@ export class InventoryController {
     }
   };
 
-  private static buildFieldsPatch(
-    patch: Record<string, unknown>
-  ): Partial<WritableFields> {
+  private static buildFieldsPatch(patch: Record<string, unknown>): Partial<WritableFields> {
     const data: Partial<WritableFields> = {};
-    const entries = Object.entries(patch) as Array<
-      [WritableKey, WritableFields[WritableKey]]
-    >;
+    const entries = Object.entries(patch) as Array<[WritableKey, WritableFields[WritableKey]]>;
     for (const [key, value] of entries) {
       if (isFieldKey(key)) {
         (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = value;
@@ -391,7 +412,7 @@ export class InventoryController {
   private static async persistInventoryFields(
     inventoryId: string,
     version: number,
-    data: Partial<WritableFields>
+    data: Partial<WritableFields>,
   ): Promise<{ inventoryId: string; version: number; created: boolean }> {
     const exists = await prisma.inventoryFields.findUnique({ where: { inventoryId } });
     if (!exists) {
@@ -419,8 +440,8 @@ export class InventoryController {
   }
 
   public static updateIdFormat = async (
-    request: Request<InventoryParameters, {}, InventoryIdFormatUpdateBody>,
-    response: Response
+    request: Request<InventoryParameters, Record<string, never>, InventoryIdFormatUpdateBody>,
+    response: Response,
   ) => {
     try {
       const { schema, version } = request.body;
@@ -456,6 +477,5 @@ export class InventoryController {
     } catch (error) {
       return handleError(error, response);
     }
-  }
-
+  };
 }

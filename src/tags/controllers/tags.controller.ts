@@ -5,12 +5,16 @@ import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
 import type {
   InventoryParameters,
   UpdateInventoryTagsRequest,
+  TagsQuery,
+  PopularTagsQuery,
+  TagCreate,
 } from "../shared/types/schemas.ts";
 
 export class TagsController {
   public static getAll = async (request: Request, response: Response) => {
     try {
-      const { search = "", limit = 50 } = response.locals.query ?? {};
+      const query = response.locals.query as TagsQuery | undefined;
+      const { search = "", limit = 50 } = query ?? {};
       const where = search ? { name: { contains: search, mode: "insensitive" as const } } : {};
       const tags = await prisma.tag.findMany({
         where,
@@ -25,7 +29,8 @@ export class TagsController {
 
   public static getPopular = async (request: Request, response: Response) => {
     try {
-      const { limit = 10 } = response.locals.query ?? {};
+      const query = response.locals.query as PopularTagsQuery | undefined;
+      const { limit = 10 } = query ?? {};
       const tags = await prisma.tag.findMany({
         select: {
           id: true,
@@ -52,7 +57,7 @@ export class TagsController {
 
   public static create = async (request: Request, response: Response) => {
     try {
-      const { name } = request.body;
+      const { name } = request.body as TagCreate;
       const created = await prisma.tag.create({
         data: { name },
       });

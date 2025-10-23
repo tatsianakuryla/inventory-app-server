@@ -17,8 +17,12 @@ export const DiscussionCreateSchema = z.object({
   textMd: z.string().trim().min(1, "Message is required").max(10000),
 });
 
+export type DiscussionCreate = z.infer<typeof DiscussionCreateSchema>;
+
 export const DiscussionsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
   perPage: z.coerce.number().int().min(1).max(100).optional().default(20),
   order: z.enum(["asc", "desc"]).optional().default("desc"),
 });
+
+export type DiscussionsQuery = z.infer<typeof DiscussionsQuerySchema>;

@@ -121,3 +121,32 @@ export interface UserForToken  {
 export type UserBasic = Prisma.UserGetPayload<{
     select: { id: true; email: true; role: true; status: true }
 }>;
+
+export type UserListItem = {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    status: Status;
+    language: Language;
+    theme: Theme;
+    version: number;
+    googleId: string | null;
+    facebookId: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type GetUsersResponse = {
+    users: UserListItem[];
+    meta: {
+        page: number;
+        perPage: number;
+        total: number;
+        totalPages: number;
+        sortBy: "name" | "email" | "role" | "status" | "createdAt" | "updatedAt";
+        order: "asc" | "desc";
+        search: string;
+        hasMore: boolean;
+    };
+};

@@ -24,7 +24,7 @@ export async function seed(): Promise<void> {
   })
 }
 
-(async () => {
+await (async () => {
   try {
     await seed();
   }

@@ -14,10 +14,16 @@ export const CategoryQuerySchema = z.object({
   order: z.enum(["asc", "desc"]).optional().default("asc"),
 });
 
+export type CategoryQuery = z.infer<typeof CategoryQuerySchema>;
+
 export const CategoryCreateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
 });
 
+export type CategoryCreate = z.infer<typeof CategoryCreateSchema>;
+
 export const CategoryUpdateSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
 });
+
+export type CategoryUpdate = z.infer<typeof CategoryUpdateSchema>;

@@ -21,10 +21,10 @@ export async function seedCategories(): Promise<void> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  (async () => {
+  await (async () => {
     try {
       await seedCategories();
-    } catch (error) {
+    } catch {
       process.exit(1);
     } finally {
       await prisma.$disconnect();

@@ -21,9 +21,9 @@ usersRouter.patch('/me',
 
 usersRouter.get('/autocomplete',
   requireAuthAndNotBlocked,
-  Validator.requestQueryValidate(AutocompleteQuerySchema), UserController.autocompleteGetUsers);
+  Validator.requestQueryValidate(AutocompleteQuerySchema), (req, res) => UserController.autocompleteGetUsers(req, res));
 
 usersRouter.post("/register", Validator.requestBodyValidate(RegisterRequestBodySchema), UserController.register);
 usersRouter.post("/login", Validator.requestBodyValidate(LoginRequestBodySchema), UserController.login);
-usersRouter.post("/google/login", Validator.requestBodyValidate(GoogleLoginSchema), SocialController.googleLogin);
-usersRouter.post("/facebook/login", Validator.requestBodyValidate(FacebookLoginSchema), SocialController.facebookLogin);
+usersRouter.post("/google/login", Validator.requestBodyValidate(GoogleLoginSchema), (req, res) => SocialController.googleLogin(req, res));
+usersRouter.post("/facebook/login", Validator.requestBodyValidate(FacebookLoginSchema), (req, res) => SocialController.facebookLogin(req, res));
