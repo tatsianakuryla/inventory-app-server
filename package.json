@@ -11,7 +11,11 @@
     "prisma:push": "prisma db push --schema src/shared/prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema src/shared/prisma/schema.prisma",
     "prisma:seed": "prisma db seed --schema src/shared/prisma/schema.prisma",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . -w",
+    "format:check": "prettier . -c"
   },
   "prisma": {
     "seed": "ts-node src/shared/prisma/seed.ts"
@@ -34,15 +38,21 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@eslint/js": "^9.38.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/ms": "^2.1.0",
     "@types/node": "^24.7.2",
+    "eslint": "^9.38.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
     "prisma": "^6.17.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2"
   }
 }
