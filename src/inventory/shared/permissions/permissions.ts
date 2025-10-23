@@ -1,7 +1,7 @@
 export const INVENTORY_PERMISSIONS = {
   VIEWER: { read: true, write: false, delete: false },
-  EDITOR: { read: true, write: true,  delete: false },
-  OWNER:  { read: true, write: true,  delete: true  },
+  EDITOR: { read: true, write: true, delete: false },
+  OWNER: { read: true, write: true, delete: true },
 } as const;
 
 export type InventoryRoleKey = keyof typeof INVENTORY_PERMISSIONS;

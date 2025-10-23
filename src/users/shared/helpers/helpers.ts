@@ -1,44 +1,47 @@
 import type { Response } from "express";
-import { Prisma } from '@prisma/client';
-import { EmailSchema, type UsersQuery } from '../../controllers/types/controllers.types.ts';
+import { Prisma } from "@prisma/client";
+import { EmailSchema, type UsersQuery } from "../../controllers/types/controllers.types.ts";
 import { isError } from "../../../shared/typeguards/typeguards.ts";
 
 export function handleError(error: unknown, response: Response) {
   if (isError(error)) {
     return response.status(500).json({ error: error.message });
   }
-  return response.status(500).json({ error: 'Internal Server Error' });
+  return response.status(500).json({ error: "Internal Server Error" });
 }
 
 export function toUserOrderBy(
-  sortBy: UsersQuery['sortBy'],
-  order: UsersQuery['order']
+  sortBy: UsersQuery["sortBy"],
+  order: UsersQuery["order"],
 ): Prisma.UserOrderByWithRelationInput {
   switch (sortBy) {
-    case 'name':      return { name: order };
-    case 'email':     return { email: order };
-    case 'role':      return { role: order };
-    case 'status':    return { status: order };
-    case 'createdAt': return { createdAt: order };
-    case 'updatedAt': return { updatedAt: order };
+    case "name":
+      return { name: order };
+    case "email":
+      return { email: order };
+    case "role":
+      return { role: order };
+    case "status":
+      return { status: order };
+    case "createdAt":
+      return { createdAt: order };
+    case "updatedAt":
+      return { updatedAt: order };
     default: {
-      return { createdAt: 'desc' };
+      return { createdAt: "desc" };
     }
   }
 }
 
 export function toAutocompleteOrderBy(
-  sortBy: 'name'|'email',
-  order: 'asc'|'desc'
+  sortBy: "name" | "email",
+  order: "asc" | "desc",
 ): Prisma.UserOrderByWithRelationInput {
-  return sortBy === 'name' ? { name: order } : { email: order };
+  return sortBy === "name" ? { name: order } : { email: order };
 }
 
 export function getAdminEmails(): Set<string> {
-  const raw =
-    process.env.SUPERADMIN_EMAILS ??
-    process.env.SUPERADMIN_EMAIL ??
-    "";
+  const raw = process.env.SUPERADMIN_EMAILS ?? process.env.SUPERADMIN_EMAIL ?? "";
   const emails = raw
     .split(",")
     .filter(Boolean)

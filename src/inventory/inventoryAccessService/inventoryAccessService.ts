@@ -6,7 +6,7 @@ import type { UserContext } from "../shared/types/schemas.ts";
 export class InventoryAccessService {
   public static async getInventoryRole(
     inventoryId: string,
-    user?: UserContext
+    user?: UserContext,
   ): Promise<InventoryRole> {
     if (!user || !user.id) return InventoryRole.VIEWER;
     if (user.role === Role.ADMIN) return InventoryRole.OWNER;
@@ -26,17 +26,14 @@ export class InventoryAccessService {
     return InventoryRole.VIEWER;
   }
 
-  public static async canUserEditItems(
-    inventoryId: string,
-    user?: UserContext
-  ): Promise<boolean> {
+  public static async canUserEditItems(inventoryId: string, user?: UserContext): Promise<boolean> {
     const role = await this.getInventoryRole(inventoryId, user);
     return isActionAllowed(role, "write");
   }
 
   public static async canManageInventory(
     inventoryId: string,
-    user?: UserContext
+    user?: UserContext,
   ): Promise<boolean> {
     const role = await this.getInventoryRole(inventoryId, user);
     return isActionAllowed(role, "delete");

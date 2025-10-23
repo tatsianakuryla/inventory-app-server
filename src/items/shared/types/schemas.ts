@@ -51,8 +51,10 @@ export const ItemUpdateSchema = baseFields.extend({
 export type ItemUpdateRequest = z.infer<typeof ItemUpdateSchema>;
 
 export const DeleteItemsBodySchema = z.object({
-  items: z.array(z.object({ id: IdSchema, version: z.number().int().min(1) }))
-    .min(1).max(200),
+  items: z
+    .array(z.object({ id: IdSchema, version: z.number().int().min(1) }))
+    .min(1)
+    .max(200),
 });
 
 export type DeleteItemsBody = z.infer<typeof DeleteItemsBodySchema>;

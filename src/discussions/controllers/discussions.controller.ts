@@ -2,7 +2,12 @@ import type { Request, Response } from "express";
 import prisma from "../../shared/db/db.ts";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { Role } from "@prisma/client";
-import type { InventoryParameters, DiscussionIdParameters, DiscussionsQuery, DiscussionCreate } from "../shared/types/schemas.ts";
+import type {
+  InventoryParameters,
+  DiscussionIdParameters,
+  DiscussionsQuery,
+  DiscussionCreate,
+} from "../shared/types/schemas.ts";
 
 export class DiscussionsController {
   public static getMany = async (request: Request, response: Response) => {

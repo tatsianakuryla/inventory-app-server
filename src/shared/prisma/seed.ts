@@ -19,19 +19,17 @@ export async function seed(): Promise<void> {
   const emails = existing.map((user: PickedUser) => user.email);
   if (existing.length === 0) return;
   await prisma.user.updateMany({
-    where: { email: { in: emails }, NOT: { role: Role.ADMIN }},
+    where: { email: { in: emails }, NOT: { role: Role.ADMIN } },
     data: { role: Role.ADMIN },
-  })
+  });
 }
 
 await (async () => {
   try {
     await seed();
-  }
-  catch {
+  } catch {
     process.exit(1);
-  }
-  finally {
+  } finally {
     await prisma.$disconnect();
   }
 })();

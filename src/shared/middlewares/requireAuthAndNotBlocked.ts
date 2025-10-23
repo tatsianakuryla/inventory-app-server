@@ -4,16 +4,20 @@ import { isTokenExpiredError } from "../../users/shared/typeguards/typeguards.ts
 import prisma from "../db/db.ts";
 import { Status } from "@prisma/client";
 
-export async function requireAuthAndNotBlocked(request: Request, response: Response, next: NextFunction) {
+export async function requireAuthAndNotBlocked(
+  request: Request,
+  response: Response,
+  next: NextFunction,
+) {
   const token = TokenController.getBearer(request);
   if (!token) return response.status(401).json({ error: "Unauthenticated" });
   try {
     const payload = TokenController.verifyAccessToken(token);
     if (!payload?.sub) return response.status(401).json({ error: "Invalid token" });
-    const user = await prisma.user.findUnique(
-      { where: { id: payload.sub },
-        select: { id: true, role: true, status: true, version: true }
-      });
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, role: true, status: true, version: true },
+    });
     if (!user) return response.status(401).json({ error: "Unauthorized" });
     if (user.status === Status.BLOCKED) {
       return response.status(403).json({ error: "User is blocked" });

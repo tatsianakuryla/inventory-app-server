@@ -14,16 +14,12 @@ import {
 
 export const tagsRouter = Router();
 
-tagsRouter.get(
-  "/",
-  Validator.requestQueryValidate(TagsQuerySchema),
-  TagsController.getAll
-);
+tagsRouter.get("/", Validator.requestQueryValidate(TagsQuerySchema), TagsController.getAll);
 
 tagsRouter.get(
   "/popular",
   Validator.requestQueryValidate(PopularTagsQuerySchema),
-  TagsController.getPopular
+  TagsController.getPopular,
 );
 
 tagsRouter.post(
@@ -31,13 +27,13 @@ tagsRouter.post(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(TagCreateSchema),
-  TagsController.create
+  TagsController.create,
 );
 
 tagsRouter.get(
   "/inventory/:inventoryId",
   Validator.requestParamsValidate(InventoryParametersSchema),
-  TagsController.getInventoryTags
+  TagsController.getInventoryTags,
 );
 
 tagsRouter.put(
@@ -46,5 +42,5 @@ tagsRouter.put(
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(UpdateInventoryTagsSchema),
-  TagsController.updateInventoryTags
+  TagsController.updateInventoryTags,
 );

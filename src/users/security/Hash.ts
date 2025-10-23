@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 import { createHmac } from "node:crypto";
 import { HASH_WORK_FACTOR } from "../../shared/constants/constants.ts";
 

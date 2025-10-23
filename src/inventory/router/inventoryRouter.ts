@@ -1,14 +1,15 @@
-import { Router } from 'express';
-import { Validator } from '../../shared/middlewares/validator.ts'
+import { Router } from "express";
+import { Validator } from "../../shared/middlewares/validator.ts";
 import {
   InventoryCreateRequestSchema,
-  InventoryListQuerySchema, InventoryToDeleteSchema,
+  InventoryListQuerySchema,
+  InventoryToDeleteSchema,
   InventoryUpdateRequestSchema,
   UpsertAccessBodySchema,
   RevokeAccessBodySchema,
   type InventoryParameters,
   UpdateInventoryFieldsBodySchema,
-  InventoryIdFormatUpdateBodySchema
+  InventoryIdFormatUpdateBodySchema,
 } from "../shared/types/schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
@@ -16,46 +17,57 @@ import { requireCanManageInventory } from "../shared/middlewares/requireCanManag
 
 export const inventoryRouter = Router();
 
-inventoryRouter.post('/',
+inventoryRouter.post(
+  "/",
   requireAuthAndNotBlocked,
   Validator.requestBodyValidate(InventoryCreateRequestSchema),
-  InventoryController.create);
+  InventoryController.create,
+);
 
-inventoryRouter.get('/',
+inventoryRouter.get(
+  "/",
   Validator.requestQueryValidate(InventoryListQuerySchema),
-  InventoryController.getAll);
+  InventoryController.getAll,
+);
 
-inventoryRouter.get<InventoryParameters>('/:inventoryId', InventoryController.getOne);
+inventoryRouter.get<InventoryParameters>("/:inventoryId", InventoryController.getOne);
 
 inventoryRouter.patch<InventoryParameters>(
   "/:inventoryId",
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(InventoryUpdateRequestSchema),
-  InventoryController.update);
+  InventoryController.update,
+);
 
-inventoryRouter.delete('/',
+inventoryRouter.delete(
+  "/",
   requireAuthAndNotBlocked,
   Validator.requestBodyValidate(InventoryToDeleteSchema),
-  InventoryController.removeMany);
+  InventoryController.removeMany,
+);
 
-inventoryRouter.get<InventoryParameters>('/:inventoryId/access',
+inventoryRouter.get<InventoryParameters>(
+  "/:inventoryId/access",
   requireAuthAndNotBlocked,
   requireCanManageInventory,
-  InventoryController.getAccessData);
+  InventoryController.getAccessData,
+);
 
-inventoryRouter.put<InventoryParameters>('/:inventoryId/access',
+inventoryRouter.put<InventoryParameters>(
+  "/:inventoryId/access",
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(UpsertAccessBodySchema),
-  InventoryController.updateInventoryAccess);
+  InventoryController.updateInventoryAccess,
+);
 
 inventoryRouter.delete<InventoryParameters>(
   "/:inventoryId/access",
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(RevokeAccessBodySchema),
-  InventoryController.deleteAccess
+  InventoryController.deleteAccess,
 );
 
 inventoryRouter.put<InventoryParameters>(
@@ -63,7 +75,7 @@ inventoryRouter.put<InventoryParameters>(
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(UpdateInventoryFieldsBodySchema),
-  InventoryController.updateInventoryFields
+  InventoryController.updateInventoryFields,
 );
 
 inventoryRouter.put<InventoryParameters>(
@@ -71,5 +83,5 @@ inventoryRouter.put<InventoryParameters>(
   requireAuthAndNotBlocked,
   requireCanManageInventory,
   Validator.requestBodyValidate(InventoryIdFormatUpdateBodySchema),
-  InventoryController.updateIdFormat
+  InventoryController.updateIdFormat,
 );

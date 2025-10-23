@@ -2,26 +2,23 @@ import type { Request, Response } from "express";
 import prisma from "../../shared/db/db.ts";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
-import type { CategoryParameters, CategoryQuery, CategoryCreate, CategoryUpdate } from "../shared/types/schemas.ts";
+import type {
+  CategoryParameters,
+  CategoryQuery,
+  CategoryCreate,
+  CategoryUpdate,
+} from "../shared/types/schemas.ts";
 
 export class CategoryController {
   public static getAll = async (_request: Request, response: Response) => {
     try {
       const query = response.locals.query as CategoryQuery;
-      const {
-        search = "",
-        page = 1,
-        perPage = 20,
-        sortBy = "name",
-        order = "asc",
-      } = query ?? {};
+      const { search = "", page = 1, perPage = 20, sortBy = "name", order = "asc" } = query ?? {};
       const finalPage = Math.max(1, Number(page) || 1);
       const take = Math.max(1, Number(perPage) || 20);
       const skip = (finalPage - 1) * take;
       const safeOrder: "asc" | "desc" = order === "asc" ? "asc" : "desc";
-      const where = search
-        ? { name: { contains: search, mode: "insensitive" as const } }
-        : {};
+      const where = search ? { name: { contains: search, mode: "insensitive" as const } } : {};
       const [items, total] = await prisma.$transaction([
         prisma.category.findMany({
           where,

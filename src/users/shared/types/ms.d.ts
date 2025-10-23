@@ -1,4 +1,4 @@
-declare module 'ms' {
+declare module "ms" {
   export type StringValue = string & {
     __msBrand: never;
   };

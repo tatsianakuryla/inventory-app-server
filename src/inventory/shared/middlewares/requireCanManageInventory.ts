@@ -3,13 +3,20 @@ import { InventoryAccessService } from "../../inventoryAccessService/inventoryAc
 import { buildUserContext } from "../helpers/helpers.ts";
 import type { InventoryParameters } from "../types/schemas.ts";
 
-export async function requireCanManageInventory (request: Request<InventoryParameters>, response: Response, next: NextFunction) {
+export async function requireCanManageInventory(
+  request: Request<InventoryParameters>,
+  response: Response,
+  next: NextFunction,
+) {
   try {
     const userContext = buildUserContext(request);
-    const ok = await InventoryAccessService.canManageInventory(request.params.inventoryId, userContext);
+    const ok = await InventoryAccessService.canManageInventory(
+      request.params.inventoryId,
+      userContext,
+    );
     if (!ok) return response.status(403).json({ error: "Forbidden" });
     next();
   } catch {
-    response.status(403).json({ error: "Forbidden" })
+    response.status(403).json({ error: "Forbidden" });
   }
 }

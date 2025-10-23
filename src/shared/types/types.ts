@@ -1,7 +1,7 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export interface ResponseError {
-    error: string,
+  error: string;
 }
 
 export const IdSchema = z.cuid().trim().min(1);

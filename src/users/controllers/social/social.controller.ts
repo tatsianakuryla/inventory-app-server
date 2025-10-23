@@ -2,7 +2,7 @@ import prisma from "../../../shared/db/db.ts";
 import { googleClient } from "../../../shared/googleClient/googleClient.ts";
 import { Status, Role } from "@prisma/client";
 import type { Request, Response } from "express";
-import {EmailSchema, type ResponseBody, type SafeUser} from "../types/controllers.types.ts";
+import { EmailSchema, type ResponseBody, type SafeUser } from "../types/controllers.types.ts";
 import { TokenController } from "../token/token.controller.ts";
 import {
   type FacebookLoginBody,
@@ -13,13 +13,12 @@ import {
 import { USER_SELECTED } from "../../shared/constants/constants.ts";
 import { Hash } from "../../security/Hash.ts";
 import { SUPERADMINS } from "../../shared/constants/constants.ts";
-import { fbDebugUrl, fbProfileUrl}  from "./social.constants.ts";
+import { fbDebugUrl, fbProfileUrl } from "./social.constants.ts";
 
 export class SocialController {
-
   public static async googleLogin(
     request: Request<Record<string, never>, ResponseBody, GoogleLoginBody>,
-    response: Response<ResponseBody>
+    response: Response<ResponseBody>,
   ): Promise<Response<ResponseBody>> {
     try {
       const { idToken } = request.body;
@@ -43,7 +42,7 @@ export class SocialController {
 
   public static async facebookLogin(
     request: Request<Record<string, never>, ResponseBody, FacebookLoginBody>,
-    response: Response<ResponseBody>
+    response: Response<ResponseBody>,
   ): Promise<Response<ResponseBody>> {
     try {
       const { accessToken } = request.body;
@@ -56,7 +55,7 @@ export class SocialController {
       }
       const profile = await this.getFbProfileUrl(accessToken);
       const fbId = profile.id;
-      const email = EmailSchema.parse(profile.email || '');
+      const email = EmailSchema.parse(profile.email || "");
       if (!fbId) return response.status(401).json({ error: "Facebook profile read failed" });
       if (!email) return response.status(400).json({ error: "Facebook email not granted" });
       const displayName = profile?.name?.trim() || email.split("@")[0]! || "User";
@@ -67,25 +66,29 @@ export class SocialController {
     }
   }
 
-  private static async getFbDebugJson(accessToken: string): Promise<{ data?: { is_valid?: boolean; app_id?: string } }> {
+  private static async getFbDebugJson(
+    accessToken: string,
+  ): Promise<{ data?: { is_valid?: boolean; app_id?: string } }> {
     const appAccessToken = `${process.env.FACEBOOK_APP_ID}|${process.env.FACEBOOK_APP_SECRET}`;
     const newDebugURL = new URL(fbDebugUrl);
     newDebugURL.searchParams.set("input_token", accessToken);
     newDebugURL.searchParams.set("access_token", appAccessToken);
     const response = await fetch(newDebugURL.toString());
-    return await response.json() as { data?: { is_valid?: boolean; app_id?: string } };
+    return (await response.json()) as { data?: { is_valid?: boolean; app_id?: string } };
   }
 
-  private static async getFbProfileUrl(accessToken: string): Promise<{ id?: string; name?: string; email?: string }> {
+  private static async getFbProfileUrl(
+    accessToken: string,
+  ): Promise<{ id?: string; name?: string; email?: string }> {
     const newFbProfileUrl = new URL(fbProfileUrl);
     newFbProfileUrl.searchParams.set("fields", "id,name,email");
     newFbProfileUrl.searchParams.set("access_token", accessToken);
     newFbProfileUrl.searchParams.set(
       "appsecret_proof",
-      Hash.makeAppSecretProof(accessToken, process.env.FACEBOOK_APP_SECRET!)
+      Hash.makeAppSecretProof(accessToken, process.env.FACEBOOK_APP_SECRET!),
     );
     const response = await fetch(newFbProfileUrl.toString());
-    return await response.json() as { id?: string; name?: string; email?: string };
+    return (await response.json()) as { id?: string; name?: string; email?: string };
   }
 
   private static async findOrCreateUserByProvider(
@@ -129,10 +132,7 @@ export class SocialController {
     };
   }
 
-  private static respondWithAuth(
-    response: Response<ResponseBody>,
-    user: SafeUser
-  ) {
+  private static respondWithAuth(response: Response<ResponseBody>, user: SafeUser) {
     if (user.status === Status.BLOCKED) {
       return response.status(403).json({ error: "User is blocked" });
     }

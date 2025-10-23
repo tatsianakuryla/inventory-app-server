@@ -63,13 +63,7 @@ export class InventoryController {
 
   public static getAll = async (request: Request, response: Response) => {
     const query = response.locals.query as InventoryListQuery;
-    const {
-      search = "",
-      page = 1,
-      perPage = 20,
-      sortBy = "createdAt",
-      order = "desc",
-    } = query;
+    const { search = "", page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
     const finalPage = Math.max(1, page);
     const skip = (finalPage - 1) * perPage;
     const where = this.buildSearchWhere(request, search);

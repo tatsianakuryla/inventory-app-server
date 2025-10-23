@@ -15,7 +15,7 @@ export const categoriesRouter = Router();
 categoriesRouter.get(
   "/",
   Validator.requestQueryValidate(CategoryQuerySchema),
-  CategoryController.getAll
+  CategoryController.getAll,
 );
 
 categoriesRouter.get("/stats", CategoryController.getStats);
@@ -25,7 +25,7 @@ categoriesRouter.post(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(CategoryCreateSchema),
-  CategoryController.create
+  CategoryController.create,
 );
 
 categoriesRouter.patch(
@@ -34,7 +34,7 @@ categoriesRouter.patch(
   requireAdmin,
   Validator.requestParamsValidate(CategoryParametersSchema),
   Validator.requestBodyValidate(CategoryUpdateSchema),
-  CategoryController.update
+  CategoryController.update,
 );
 
 categoriesRouter.delete(
@@ -42,7 +42,7 @@ categoriesRouter.delete(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestParamsValidate(CategoryParametersSchema),
-  CategoryController.remove
+  CategoryController.remove,
 );
 
 categoriesRouter.delete(
@@ -50,5 +50,5 @@ categoriesRouter.delete(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestParamsValidate(CategoryParametersSchema),
-  CategoryController.removeWithUncategorize
+  CategoryController.removeWithUncategorize,
 );

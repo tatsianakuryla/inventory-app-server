@@ -7,12 +7,12 @@ import type {
   ItemListQuery,
   ItemCreateRequest,
   ItemUpdateRequest,
-  DeleteItemsBody
+  DeleteItemsBody,
 } from "../shared/types/schemas.ts";
 import {
   isPrismaForeignKeyError,
   isPrismaUniqueError,
-  isPrismaVersionConflictError
+  isPrismaVersionConflictError,
 } from "../../shared/typeguards/typeguards.ts";
 import { CustomIdService } from "../customIdService/customIdService.ts";
 import { ITEM_SELECTED } from "../shared/constants/constants.ts";
@@ -38,19 +38,19 @@ export class ItemsController {
         inventoryId,
         ...(search
           ? {
-            OR: [
-              { customId: { contains: search, mode: "insensitive" } },
-              { text1: { contains: search, mode: "insensitive" } },
-              { text2: { contains: search, mode: "insensitive" } },
-              { text3: { contains: search, mode: "insensitive" } },
-              { long1: { contains: search, mode: "insensitive" } },
-              { long2: { contains: search, mode: "insensitive" } },
-              { long3: { contains: search, mode: "insensitive" } },
-              { link1: { contains: search, mode: "insensitive" } },
-              { link2: { contains: search, mode: "insensitive" } },
-              { link3: { contains: search, mode: "insensitive" } },
-            ],
-          }
+              OR: [
+                { customId: { contains: search, mode: "insensitive" } },
+                { text1: { contains: search, mode: "insensitive" } },
+                { text2: { contains: search, mode: "insensitive" } },
+                { text3: { contains: search, mode: "insensitive" } },
+                { long1: { contains: search, mode: "insensitive" } },
+                { long2: { contains: search, mode: "insensitive" } },
+                { long3: { contains: search, mode: "insensitive" } },
+                { link1: { contains: search, mode: "insensitive" } },
+                { link2: { contains: search, mode: "insensitive" } },
+                { link3: { contains: search, mode: "insensitive" } },
+              ],
+            }
           : undefined),
       };
       const [items, total] = await prisma.$transaction([
@@ -99,11 +99,21 @@ export class ItemsController {
                 inventoryId,
                 customId,
                 createdById,
-                text1: body.text1 ?? null, text2: body.text2 ?? null, text3: body.text3 ?? null,
-                long1: body.long1 ?? null, long2: body.long2 ?? null, long3: body.long3 ?? null,
-                num1: body.num1 ?? null, num2: body.num2 ?? null, num3: body.num3 ?? null,
-                link1: body.link1 ?? null, link2: body.link2 ?? null, link3: body.link3 ?? null,
-                bool1: body.bool1 ?? null, bool2: body.bool2 ?? null, bool3: body.bool3 ?? null,
+                text1: body.text1 ?? null,
+                text2: body.text2 ?? null,
+                text3: body.text3 ?? null,
+                long1: body.long1 ?? null,
+                long2: body.long2 ?? null,
+                long3: body.long3 ?? null,
+                num1: body.num1 ?? null,
+                num2: body.num2 ?? null,
+                num3: body.num3 ?? null,
+                link1: body.link1 ?? null,
+                link2: body.link2 ?? null,
+                link3: body.link3 ?? null,
+                bool1: body.bool1 ?? null,
+                bool2: body.bool2 ?? null,
+                bool3: body.bool3 ?? null,
               },
               select: ITEM_SELECTED,
             });
@@ -161,8 +171,10 @@ export class ItemsController {
       }
       return response.json(updated);
     } catch (error) {
-      if (isPrismaVersionConflictError(error)) return response.status(409).json({ error: "Version conflict" });
-      if (isPrismaUniqueError(error)) return response.status(409).json({ error: "Duplicate customId in this inventory" });
+      if (isPrismaVersionConflictError(error))
+        return response.status(409).json({ error: "Version conflict" });
+      if (isPrismaUniqueError(error))
+        return response.status(409).json({ error: "Duplicate customId in this inventory" });
       return handleError(error, response);
     }
   };
@@ -172,7 +184,7 @@ export class ItemsController {
       const { inventoryId } = request.params as Pick<ItemParameters, "inventoryId">;
       const { items } = request.body as DeleteItemsBody;
       const ops = items.map(({ id, version }) =>
-        prisma.item.deleteMany({ where: { id, version, inventoryId } })
+        prisma.item.deleteMany({ where: { id, version, inventoryId } }),
       );
       const results = ops.length ? await prisma.$transaction(ops) : [];
       const deletedIds: string[] = [];

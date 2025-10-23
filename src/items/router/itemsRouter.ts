@@ -17,13 +17,13 @@ itemsRouter.get(
   "/:inventoryId",
   Validator.requestParamsValidate(ItemParametersSchema.pick({ inventoryId: true })),
   Validator.requestQueryValidate(ItemListQuerySchema),
-  ItemsController.getMany
+  ItemsController.getMany,
 );
 
 itemsRouter.get(
   "/:inventoryId/:itemId",
   Validator.requestParamsValidate(ItemParametersSchema),
-  ItemsController.getOne
+  ItemsController.getOne,
 );
 
 itemsRouter.post(
@@ -32,7 +32,7 @@ itemsRouter.post(
   requireAuthAndNotBlocked,
   requireCanEditItems,
   Validator.requestBodyValidate(ItemCreateSchema),
-  ItemsController.create
+  ItemsController.create,
 );
 
 itemsRouter.patch(
@@ -41,7 +41,7 @@ itemsRouter.patch(
   requireAuthAndNotBlocked,
   requireCanEditItems,
   Validator.requestBodyValidate(ItemUpdateSchema),
-  ItemsController.update
+  ItemsController.update,
 );
 
 itemsRouter.delete(
@@ -50,19 +50,19 @@ itemsRouter.delete(
   requireAuthAndNotBlocked,
   requireCanEditItems,
   Validator.requestBodyValidate(DeleteItemsBodySchema),
-  ItemsController.removeMany
+  ItemsController.removeMany,
 );
 
 itemsRouter.post(
   "/:inventoryId/:itemId/like",
   Validator.requestParamsValidate(ItemParametersSchema),
   requireAuthAndNotBlocked,
-  ItemsController.like
+  ItemsController.like,
 );
 
 itemsRouter.delete(
   "/:inventoryId/:itemId/like",
   Validator.requestParamsValidate(ItemParametersSchema),
   requireAuthAndNotBlocked,
-  ItemsController.unlike
+  ItemsController.unlike,
 );
