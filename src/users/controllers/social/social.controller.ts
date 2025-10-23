@@ -16,10 +16,10 @@ import { SUPERADMINS } from "../../shared/constants/constants.ts";
 import { fbDebugUrl, fbProfileUrl } from "./social.constants.ts";
 
 export class SocialController {
-  public static async googleLogin(
+  public static googleLogin = async (
     request: Request<Record<string, never>, ResponseBody, GoogleLoginBody>,
     response: Response<ResponseBody>,
-  ): Promise<Response<ResponseBody>> {
+  ): Promise<Response<ResponseBody>> => {
     try {
       const { idToken } = request.body;
       const ticket = await googleClient.verifyIdToken({
@@ -38,12 +38,12 @@ export class SocialController {
     } catch {
       return response.status(401).json({ error: "Google auth failed" });
     }
-  }
+  };
 
-  public static async facebookLogin(
+  public static facebookLogin = async (
     request: Request<Record<string, never>, ResponseBody, FacebookLoginBody>,
     response: Response<ResponseBody>,
-  ): Promise<Response<ResponseBody>> {
+  ): Promise<Response<ResponseBody>> => {
     try {
       const { accessToken } = request.body;
       const debugJson = await this.getFbDebugJson(accessToken);
@@ -64,7 +64,7 @@ export class SocialController {
     } catch {
       return response.status(401).json({ error: "Facebook auth failed" });
     }
-  }
+  };
 
   private static async getFbDebugJson(
     accessToken: string,

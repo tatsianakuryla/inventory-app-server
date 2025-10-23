@@ -22,6 +22,7 @@ A comprehensive REST API for managing personal collections with customizable fie
 This backend system provides a robust foundation for building collection management applications. Users can create custom collections (inventories) with flexible field configurations, share them with others, and organize items with categories and tags.
 
 **Use Cases:**
+
 - Personal libraries (books, movies, games)
 - Asset management
 - Product catalogs
@@ -33,6 +34,7 @@ This backend system provides a robust foundation for building collection managem
 ## 🛠 Technology Stack
 
 ### Core Technologies
+
 - **Node.js** (18+) - JavaScript runtime
 - **Express** - Fast, minimalist web framework
 - **TypeScript** - Type-safe JavaScript
@@ -40,6 +42,7 @@ This backend system provides a robust foundation for building collection managem
 - **PostgreSQL** (14+) - Robust relational database
 
 ### Key Libraries
+
 - **Zod** - Schema validation with TypeScript integration
 - **JWT (jsonwebtoken)** - Stateless authentication
 - **bcryptjs** - Secure password hashing
@@ -48,6 +51,7 @@ This backend system provides a robust foundation for building collection managem
 - **CORS** - Cross-Origin Resource Sharing
 
 ### Development Tools
+
 - **ESLint** - Code linting
 - **Prettier** - Code formatting
 
@@ -56,6 +60,7 @@ This backend system provides a robust foundation for building collection managem
 ## ✨ Key Features
 
 ### 👥 User Management
+
 - **Multiple Authentication Methods**
   - Email/password registration
   - Google OAuth2
@@ -72,6 +77,7 @@ This backend system provides a robust foundation for building collection managem
 - **Optimistic Locking** - Version-based conflict prevention
 
 ### 📦 Collection (Inventory) Management
+
 - **CRUD Operations** with validation
 - **Visibility Control**
   - Public collections - accessible to everyone
@@ -96,6 +102,7 @@ This backend system provides a robust foundation for building collection managem
   - Sorting by multiple fields
 
 ### 📝 Item Management
+
 - **Dynamic Fields** based on collection configuration
 - **Automatic ID Generation** using custom format
 - **Like System** - users can like/unlike items
@@ -106,6 +113,7 @@ This backend system provides a robust foundation for building collection managem
 - **Search** - across all text and numeric fields
 
 ### 🏷️ Organization
+
 - **Categories**
   - Reusable categories across collections
   - Admin-managed
@@ -116,6 +124,7 @@ This backend system provides a robust foundation for building collection managem
   - Flexible tagging system
 
 ### 💬 Collaboration
+
 - **Discussion System**
   - Comments on collections
   - Markdown support
@@ -123,6 +132,7 @@ This backend system provides a robust foundation for building collection managem
   - Chronological ordering
 
 ### 👨‍💼 Administration
+
 - **User Management Dashboard**
   - View all users with filtering
   - Block/unblock users
@@ -141,6 +151,7 @@ This backend system provides a robust foundation for building collection managem
 ### Prerequisites
 
 Ensure you have the following installed:
+
 - **Node.js** v18.x or higher
 - **PostgreSQL** v14.x or higher
 - **npm** or **yarn** package manager
@@ -186,6 +197,7 @@ SUPERADMINS="admin@example.com,superadmin@example.com"
 ```
 
 **Important Notes:**
+
 - Replace database credentials with your PostgreSQL setup
 - Generate a strong JWT_SECRET (recommended: 32+ random characters)
 - Configure OAuth credentials if using social login
@@ -217,6 +229,7 @@ npm start
 The API will be available at: `http://localhost:3000`
 
 Test the connection:
+
 ```bash
 curl http://localhost:3000
 # Should return: {"status":"ok"}
@@ -321,12 +334,15 @@ server/
 ## 🌐 API Documentation
 
 ### Base URL
+
 ```
 http://localhost:3000/api
 ```
 
 ### Authentication Header
+
 Most endpoints require JWT authentication:
+
 ```http
 Authorization: Bearer <jwt-token>
 ```
@@ -335,75 +351,89 @@ Authorization: Bearer <jwt-token>
 
 #### 🔐 Authentication Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/users/register` | Create new account | ❌ |
-| POST | `/api/users/login` | Login with email/password | ❌ |
-| POST | `/api/users/google/login` | Login with Google | ❌ |
-| POST | `/api/users/facebook/login` | Login with Facebook | ❌ |
-| GET | `/api/users/me` | Get current user profile | ✅ |
-| PATCH | `/api/users/me` | Update profile | ✅ |
-| GET | `/api/users/autocomplete` | Search users | ✅ |
+| Method | Endpoint                    | Description               | Auth Required |
+| ------ | --------------------------- | ------------------------- | ------------- |
+| POST   | `/api/users/register`       | Create new account        | ❌            |
+| POST   | `/api/users/login`          | Login with email/password | ❌            |
+| POST   | `/api/users/google/login`   | Login with Google         | ❌            |
+| POST   | `/api/users/facebook/login` | Login with Facebook       | ❌            |
+| GET    | `/api/users/me`             | Get current user profile  | ✅            |
+| PATCH  | `/api/users/me`             | Update profile            | ✅            |
+| GET    | `/api/users/autocomplete`   | Search users              | ✅            |
 
 #### 📦 Collection Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/inventory` | Create collection | ✅ |
-| GET | `/api/inventory` | List collections | ❌ (public only) |
-| GET | `/api/inventory/:id` | Get collection details | ❌ (if public) |
-| PATCH | `/api/inventory/:id` | Update collection | ✅ (owner/admin) |
-| DELETE | `/api/inventory` | Delete collections (bulk) | ✅ |
-| GET | `/api/inventory/:id/access` | Get access list | ✅ (owner/admin) |
-| PUT | `/api/inventory/:id/access` | Update access | ✅ (owner/admin) |
-| DELETE | `/api/inventory/:id/access` | Revoke access | ✅ (owner/admin) |
-| PUT | `/api/inventory/:id/fields` | Configure fields | ✅ (owner/admin) |
-| PUT | `/api/inventory/:id/id-format` | Set ID format | ✅ (owner/admin) |
+| Method | Endpoint                       | Description               | Auth Required    |
+| ------ | ------------------------------ | ------------------------- | ---------------- |
+| POST   | `/api/inventory`               | Create collection         | ✅               |
+| GET    | `/api/inventory`               | List collections          | ❌ (public only) |
+| GET    | `/api/inventory/:id`           | Get collection details    | ❌ (if public)   |
+| PATCH  | `/api/inventory/:id`           | Update collection         | ✅ (owner/admin) |
+| DELETE | `/api/inventory`               | Delete collections (bulk) | ✅               |
+| GET    | `/api/inventory/:id/access`    | Get access list           | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/access`    | Update access             | ✅ (owner/admin) |
+| DELETE | `/api/inventory/:id/access`    | Revoke access             | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/fields`    | Configure fields          | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/id-format` | Set ID format             | ✅ (owner/admin) |
 
 #### 📝 Item Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/items/:inventoryId` | List items | ❌ (if collection public) |
-| GET | `/api/items/:inventoryId/:itemId` | Get item | ❌ (if collection public) |
-| POST | `/api/items/:inventoryId` | Create item | ✅ (editor+) |
-| PATCH | `/api/items/:inventoryId/:itemId` | Update item | ✅ (editor+) |
-| DELETE | `/api/items/:inventoryId` | Delete items (bulk) | ✅ (editor+) |
-| POST | `/api/items/:inventoryId/:itemId/like` | Like item | ✅ |
-| DELETE | `/api/items/:inventoryId/:itemId/like` | Unlike item | ✅ |
+| Method | Endpoint                               | Description         | Auth Required             |
+| ------ | -------------------------------------- | ------------------- | ------------------------- |
+| GET    | `/api/items/:inventoryId`              | List items          | ❌ (if collection public) |
+| GET    | `/api/items/:inventoryId/:itemId`      | Get item            | ❌ (if collection public) |
+| POST   | `/api/items/:inventoryId`              | Create item         | ✅ (editor+)              |
+| PATCH  | `/api/items/:inventoryId/:itemId`      | Update item         | ✅ (editor+)              |
+| DELETE | `/api/items/:inventoryId`              | Delete items (bulk) | ✅ (editor+)              |
+| POST   | `/api/items/:inventoryId/:itemId/like` | Like item           | ✅                        |
+| DELETE | `/api/items/:inventoryId/:itemId/like` | Unlike item         | ✅                        |
 
 #### 🏷️ Category & Tag Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/categories` | List categories | ❌ |
-| GET | `/api/categories/stats` | Category statistics | ❌ |
-| POST | `/api/categories` | Create category | ✅ (admin) |
-| PATCH | `/api/categories/:id` | Update category | ✅ (admin) |
-| DELETE | `/api/categories/:id` | Delete category | ✅ (admin) |
-| GET | `/api/tags` | List tags | ❌ |
-| GET | `/api/tags/popular` | Popular tags | ❌ |
-| POST | `/api/tags` | Create tag | ✅ (admin) |
-| PUT | `/api/tags/:inventoryId` | Update collection tags | ✅ (editor+) |
+| Method | Endpoint                 | Description            | Auth Required |
+| ------ | ------------------------ | ---------------------- | ------------- |
+| GET    | `/api/categories`        | List categories        | ❌            |
+| GET    | `/api/categories/stats`  | Category statistics    | ❌            |
+| POST   | `/api/categories`        | Create category        | ✅ (admin)    |
+| PATCH  | `/api/categories/:id`    | Update category        | ✅ (admin)    |
+| DELETE | `/api/categories/:id`    | Delete category        | ✅ (admin)    |
+| GET    | `/api/tags`              | List tags              | ❌            |
+| GET    | `/api/tags/popular`      | Popular tags           | ❌            |
+| POST   | `/api/tags`              | Create tag             | ✅ (admin)    |
+| PUT    | `/api/tags/:inventoryId` | Update collection tags | ✅ (editor+)  |
 
 #### 💬 Discussion Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/discussions/:inventoryId` | List discussions | ❌ (if collection public) |
-| POST | `/api/discussions/:inventoryId` | Create comment | ✅ |
-| DELETE | `/api/discussions/:discussionId` | Delete comment | ✅ (author/admin) |
+| Method | Endpoint                         | Description      | Auth Required             |
+| ------ | -------------------------------- | ---------------- | ------------------------- |
+| GET    | `/api/discussions/:inventoryId`  | List discussions | ❌ (if collection public) |
+| POST   | `/api/discussions/:inventoryId`  | Create comment   | ✅                        |
+| DELETE | `/api/discussions/:discussionId` | Delete comment   | ✅ (author/admin)         |
 
 #### 👨‍💼 Admin Endpoints
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/admin` | List all users | ✅ (admin) |
-| POST | `/api/admin/users/block` | Block users | ✅ (admin) |
-| POST | `/api/admin/users/unblock` | Unblock users | ✅ (admin) |
-| POST | `/api/admin/users/promote` | Promote to admin | ✅ (admin) |
-| POST | `/api/admin/users/demote` | Demote to user | ✅ (admin) |
-| DELETE | `/api/admin/users` | Delete users | ✅ (admin) |
+| Method | Endpoint                   | Description      | Auth Required |
+| ------ | -------------------------- | ---------------- | ------------- |
+| GET    | `/api/admin`               | List all users   | ✅ (admin)    |
+| POST   | `/api/admin/users/block`   | Block users      | ✅ (admin)    |
+| POST   | `/api/admin/users/unblock` | Unblock users    | ✅ (admin)    |
+| POST   | `/api/admin/users/promote` | Promote to admin | ✅ (admin)    |
+| POST   | `/api/admin/users/demote`  | Demote to user   | ✅ (admin)    |
+| DELETE | `/api/admin/users`         | Delete users     | ✅ (admin)    |
+
+#### 🏠 Home Page Endpoints
+
+| Method | Endpoint              | Description               | Auth Required |
+| ------ | --------------------- | ------------------------- | ------------- |
+| GET    | `/api/home/latest`    | Latest N inventories      | ❌            |
+| GET    | `/api/home/popular`   | Top 5 popular inventories | ❌            |
+| GET    | `/api/home/tag-cloud` | Tag cloud with weights    | ❌            |
+
+#### 📊 Statistics Endpoint
+
+| Method | Endpoint                        | Description          | Auth Required  |
+| ------ | ------------------------------- | -------------------- | -------------- |
+| GET    | `/api/inventory/:id/statistics` | Inventory statistics | ❌ (if public) |
 
 ---
 
@@ -444,7 +474,7 @@ Authorization: Bearer <jwt-token>
   version: number;         // For optimistic locking
   createdAt: string;       // ISO 8601 timestamp
   updatedAt: string;       // ISO 8601 timestamp
-  
+
   // Extended fields (when fetching single collection)
   fields?: InventoryFieldsObject;
   InventoryIdFormat?: IdFormatObject;
@@ -461,42 +491,42 @@ Authorization: Bearer <jwt-token>
 {
   inventoryId: string;
   version: number;
-  
+
   // Text fields (3x)
   text1State: "HIDDEN" | "SHOWN";
   text1Name?: string;      // Display name (max 100 chars)
   text1Desc?: string;      // Description (max 500 chars)
   text1ShowInTable: boolean;
   // text2, text3 - same structure
-  
+
   // Long text fields (3x)
   long1State: "HIDDEN" | "SHOWN";
   long1Name?: string;
   long1Desc?: string;
   long1ShowInTable: boolean;
   // long2, long3 - same structure
-  
+
   // Numeric fields (3x)
   num1State: "HIDDEN" | "SHOWN";
   num1Name?: string;
   num1Desc?: string;
   num1ShowInTable: boolean;
   // num2, num3 - same structure
-  
+
   // Link/URL fields (3x)
   link1State: "HIDDEN" | "SHOWN";
   link1Name?: string;
   link1Desc?: string;
   link1ShowInTable: boolean;
   // link2, link3 - same structure
-  
+
   // Boolean fields (3x)
   bool1State: "HIDDEN" | "SHOWN";
   bool1Name?: string;
   bool1Desc?: string;
   bool1ShowInTable: boolean;
   // bool2, bool3 - same structure
-  
+
   displayOrder?: string[]; // Optional field ordering
 }
 ```
@@ -514,7 +544,7 @@ Authorization: Bearer <jwt-token>
   version: number;         // For optimistic locking
   createdAt: string;       // ISO 8601 timestamp
   updatedAt: string;       // ISO 8601 timestamp
-  
+
   // Dynamic fields (based on collection configuration)
   text1?: string;
   text2?: string;
@@ -531,7 +561,7 @@ Authorization: Bearer <jwt-token>
   bool1?: boolean;
   bool2?: boolean;
   bool3?: boolean;
-  
+
   // Extended fields (when fetching items list)
   likesCount?: number;           // Total likes count
   isLikedByCurrentUser?: boolean; // Current user's like status
@@ -549,7 +579,7 @@ Authorization: Bearer <jwt-token>
   description?: string;    // Description (optional, max 500 chars)
   createdAt: string;       // ISO 8601 timestamp
   updatedAt: string;       // ISO 8601 timestamp
-  
+
   // Extended field (in stats endpoint)
   _count?: {
     Inventory: number;     // Number of collections in this category
@@ -566,7 +596,7 @@ Authorization: Bearer <jwt-token>
   id: number;              // Auto-increment ID
   name: string;            // Tag name (unique, 1-50 chars)
   createdAt: string;       // ISO 8601 timestamp
-  
+
   // Extended field (in popular tags endpoint)
   _count?: {
     inventories: number;   // Number of collections with this tag
@@ -586,7 +616,7 @@ Authorization: Bearer <jwt-token>
   content: string;         // Comment text (1-2000 chars)
   createdAt: string;       // ISO 8601 timestamp
   updatedAt: string;       // ISO 8601 timestamp
-  
+
   // Extended field
   author: {
     id: string;
@@ -606,7 +636,7 @@ Authorization: Bearer <jwt-token>
   userId: string;
   inventoryId: string;
   inventoryRole: "OWNER" | "EDITOR" | "VIEWER";
-  
+
   // Extended field
   user: {
     id: string;
@@ -633,6 +663,7 @@ Used for collections, items, and users lists:
 ```
 
 **Example:**
+
 ```text
 {
   "items": [/* ... */],
@@ -692,6 +723,7 @@ All errors return consistent format:
 ```
 
 **Common HTTP Status Codes:**
+
 - `400 Bad Request` - Invalid input data
 - `401 Unauthorized` - Missing or invalid token
 - `403 Forbidden` - User blocked or insufficient permissions
@@ -700,6 +732,7 @@ All errors return consistent format:
 - `500 Internal Server Error` - Server error
 
 **Example Error Response:**
+
 ```json
 {
   "error": "Version conflict - resource was modified by another user"
@@ -711,10 +744,12 @@ All errors return consistent format:
 ### Example API Requests
 
 **Required fields:**
+
 - `version` - For optimistic locking
 - `patch` - Object with field configurations
 
 **Available fields (3 of each type):**
+
 - `text1`, `text2`, `text3` - Short text
 - `long1`, `long2`, `long3` - Long text
 - `num1`, `num2`, `num3` - Numbers
@@ -722,12 +757,14 @@ All errors return consistent format:
 - `bool1`, `bool2`, `bool3` - Booleans
 
 **For each field:**
+
 - `{field}State` - "HIDDEN" or "SHOWN"
 - `{field}Name` - Display name (max 100 chars)
 - `{field}Desc` - Description (max 500 chars)
 - `{field}ShowInTable` - Show in item list
 
 **Response 200 OK:**
+
 ```json
 {
   "inventoryId": "clyyy456...",
@@ -753,6 +790,7 @@ Content-Type: application/json
 ```
 
 **Response 201 Created:**
+
 ```json
 {
   "id": "clzzz789...",
@@ -779,10 +817,12 @@ Authorization: Bearer <token> (optional, required for private)
 ```
 
 **Query parameters:**
+
 - `search` - Search across all text and numeric fields
 - `page`, `perPage`, `sortBy`, `order` - Same as collections
 
 **Response 200 OK:**
+
 ```json
 {
   "items": [
@@ -823,6 +863,7 @@ Content-Type: application/json
 ```
 
 **Required fields:**
+
 - `version` - For optimistic locking
 
 **Response 200 OK:** Updated item object
@@ -845,6 +886,7 @@ Content-Type: application/json
 ```
 
 **Response 200 OK:**
+
 ```json
 {
   "deleted": 2,
@@ -861,12 +903,14 @@ Content-Type: application/json
 #### Like/Unlike Item
 
 **Like:**
+
 ```http
 POST http://localhost:3000/api/items/clyyy456.../clzzz789.../like
 Authorization: Bearer <token>
 ```
 
 **Unlike:**
+
 ```http
 DELETE http://localhost:3000/api/items/clyyy456.../clzzz789.../like
 Authorization: Bearer <token>
@@ -879,12 +923,14 @@ Authorization: Bearer <token>
 #### Manage Collection Access
 
 **Get access list:**
+
 ```http
 GET http://localhost:3000/api/inventory/clyyy456.../access
 Authorization: Bearer <token>
 ```
 
 **Response 200 OK:**
+
 ```json
 [
   {
@@ -900,6 +946,7 @@ Authorization: Bearer <token>
 ```
 
 **Grant/update access:**
+
 ```http
 PUT http://localhost:3000/api/inventory/clyyy456.../access
 Authorization: Bearer <token>
@@ -920,11 +967,13 @@ Content-Type: application/json
 ```
 
 **Roles:**
+
 - `OWNER` - Full control (auto-assigned to creator)
 - `EDITOR` - Can edit collection and items
 - `VIEWER` - Read-only access
 
 **Response 200 OK:**
+
 ```json
 {
   "processed": 2,
@@ -936,6 +985,7 @@ Content-Type: application/json
 ```
 
 **Revoke access:**
+
 ```http
 DELETE http://localhost:3000/api/inventory/clyyy456.../access
 Authorization: Bearer <token>
@@ -956,6 +1006,7 @@ Authorization: Bearer <admin-token>
 ```
 
 **Response 200 OK:**
+
 ```json
 {
   "items": [
@@ -990,6 +1041,7 @@ Content-Type: application/json
 ```
 
 **Response 200 OK:**
+
 ```json
 {
   "processed": 2,
@@ -1003,6 +1055,217 @@ Content-Type: application/json
 
 ---
 
+#### Get Latest Inventories
+
+```http
+GET http://localhost:3000/api/home/latest?limit=10
+```
+
+**Query parameters:**
+
+- `limit` - Number of inventories (default: 10, max: 50)
+
+**Response 200 OK:**
+
+```json
+[
+  {
+    "id": "clyyy456...",
+    "name": "My Book Collection",
+    "description": "Personal library",
+    "imageUrl": "https://example.com/cover.jpg",
+    "categoryId": 1,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "owner": {
+      "id": "clxxx123...",
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "category": {
+      "id": 1,
+      "name": "Books"
+    },
+    "_count": {
+      "Item": 42
+    }
+  }
+]
+```
+
+---
+
+#### Get Popular Inventories
+
+```http
+GET http://localhost:3000/api/home/popular?limit=5
+```
+
+**Query parameters:**
+
+- `limit` - Number of inventories (default: 5, max: 20)
+
+**Response 200 OK:**
+
+```json
+[
+  {
+    "id": "clyyy456...",
+    "name": "My Book Collection",
+    "description": "Most popular collection",
+    "imageUrl": "https://example.com/cover.jpg",
+    "categoryId": 1,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "owner": {
+      "id": "clxxx123...",
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    "category": {
+      "id": 1,
+      "name": "Books"
+    },
+    "_count": {
+      "Item": 1523
+    }
+  }
+]
+```
+
+**Note:** Sorted by number of items (descending)
+
+---
+
+#### Get Tag Cloud
+
+```http
+GET http://localhost:3000/api/home/tag-cloud?limit=50
+```
+
+**Query parameters:**
+
+- `limit` - Number of tags (default: 50, max: 100)
+
+**Response 200 OK:**
+
+```json
+[
+  {
+    "id": 1,
+    "name": "fiction",
+    "count": 125,
+    "weight": 125
+  },
+  {
+    "id": 2,
+    "name": "science",
+    "count": 89,
+    "weight": 89
+  },
+  {
+    "id": 3,
+    "name": "history",
+    "count": 67,
+    "weight": 67
+  }
+]
+```
+
+**Note:**
+
+- `count` and `weight` represent number of inventories using this tag
+- Sorted by popularity (descending)
+- Use `weight` for tag cloud font size calculation
+
+---
+
+#### Get Inventory Statistics
+
+```http
+GET http://localhost:3000/api/inventory/clyyy456.../statistics
+Authorization: Bearer <token> (optional, required for private)
+```
+
+**Response 200 OK:**
+
+```json
+{
+  "itemsCount": 42,
+  "numericFields": {
+    "num1": {
+      "avg": 1985.5,
+      "min": 1925,
+      "max": 2024,
+      "count": 42
+    },
+    "num2": {
+      "avg": 299.99,
+      "min": 9.99,
+      "max": 899.99,
+      "count": 38
+    },
+    "num3": {
+      "avg": null,
+      "min": null,
+      "max": null,
+      "count": 0
+    }
+  },
+  "textFields": {
+    "text1": [
+      {
+        "value": "Fiction",
+        "count": 15
+      },
+      {
+        "value": "Non-fiction",
+        "count": 12
+      },
+      {
+        "value": "Science Fiction",
+        "count": 8
+      }
+    ],
+    "text2": [
+      {
+        "value": "Hardcover",
+        "count": 25
+      },
+      {
+        "value": "Paperback",
+        "count": 17
+      }
+    ],
+    "text3": [],
+    "long1": [],
+    "long2": [],
+    "long3": []
+  },
+  "firstItemCreatedAt": "2024-01-01T00:00:00.000Z",
+  "lastItemCreatedAt": "2024-10-23T12:30:00.000Z"
+}
+```
+
+**Statistics includes:**
+
+- Total items count
+- **Numeric fields:** average, min, max, count of non-null values
+- **Text fields:** top 10 most frequent values with counts
+- First and last item creation dates
+
+**Response when no items:**
+
+```json
+{
+  "itemsCount": 0,
+  "numericFields": {},
+  "textFields": {},
+  "firstItemCreatedAt": null,
+  "lastItemCreatedAt": null
+}
+```
+
+---
+
 ## 🗄️ Database Schema
 
 ### Key Models Overview
@@ -1010,6 +1273,7 @@ Content-Type: application/json
 The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access.
 
 #### User Model
+
 - Stores authentication credentials (email/password or OAuth)
 - Profile preferences (language, theme)
 - Role-based permissions (USER, ADMIN)
@@ -1017,12 +1281,14 @@ The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access
 - Optimistic locking via version field
 
 #### Inventory Model
+
 - Represents collections created by users
 - Configurable visibility (public/private)
 - Linked to categories for organization
 - Version-controlled for concurrent update safety
 
 #### InventoryFields Model
+
 - One-to-one relationship with Inventory
 - Defines 15 customizable fields (3 of each type)
 - Field configuration includes:
@@ -1032,6 +1298,7 @@ The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access
   - Table visibility flag
 
 #### Item Model
+
 - Belongs to a specific Inventory
 - Dynamic fields populated based on InventoryFields configuration
 - Unique `customId` per inventory (auto-generated)
@@ -1039,6 +1306,7 @@ The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access
 - Version-controlled
 
 #### Access Control Models
+
 - **InventoryAccess**: Manages sharing (OWNER/EDITOR/VIEWER roles)
 - **Category**: Admin-managed classification
 - **Tag**: Flexible many-to-many tagging
@@ -1068,6 +1336,7 @@ The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access
 
 **Generated on:** Login, register, OAuth success  
 **Contains:**
+
 ```text
 {
   "sub": "user-id",
@@ -1096,35 +1365,42 @@ The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access
 ### Built-in Protections
 
 ✅ **Password Security**
+
 - Bcrypt with 10 salt rounds
 - Never returned in responses
 - Minimum 6 characters
 
 ✅ **HTTP Headers** (Helmet.js)
+
 - XSS protection
 - Content Security Policy
 - Frame options
 - HSTS support
 
 ✅ **CORS**
+
 - Whitelist-based origins
 - Credentials support
 - Method restrictions
 
 ✅ **Input Validation**
+
 - Zod schemas on all endpoints
 - Type coercion
 - Length/format constraints
 
 ✅ **SQL Injection**
+
 - Prisma parameterized queries
 - No raw SQL
 
 ✅ **Optimistic Locking**
+
 - Version fields prevent lost updates
 - 409 Conflict on mismatch
 
 ✅ **Super Admin Protection**
+
 - Cannot be blocked
 - Cannot be demoted
 - Cannot be deleted
@@ -1132,6 +1408,7 @@ The system uses **PostgreSQL** with **Prisma ORM** for type-safe database access
 ### Recommendations
 
 ⚠️ **Should Add:**
+
 - Rate limiting (express-rate-limit)
 - Request size limits
 - Audit logging for admin actions
@@ -1169,4 +1446,3 @@ npm start            # Start server
 - **Functional programming** preferred
 - **Explicit types** over `any`
 - **Zod schemas** for all external input
-

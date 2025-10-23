@@ -137,38 +137,38 @@ export class AdminUsersController {
     }
   }
 
-  public static async block(
+  public static block = async (
     request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,
     response: Response<UpdateUsersResponse>,
-  ) {
+  ) => {
     return this.updateStatus(request, response, Status.BLOCKED, "blocked");
-  }
+  };
 
-  public static async unblock(
+  public static unblock = async (
     request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,
     response: Response<UpdateUsersResponse>,
-  ) {
+  ) => {
     return this.updateStatus(request, response, Status.ACTIVE, "unblocked");
-  }
+  };
 
-  public static async promote(
+  public static promote = async (
     request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,
     response: Response<UpdateUsersResponse>,
-  ) {
+  ) => {
     return this.updateRole(request, response, Role.ADMIN);
-  }
+  };
 
-  public static async demote(
+  public static demote = async (
     request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,
     response: Response<UpdateUsersResponse>,
-  ) {
+  ) => {
     return this.updateRole(request, response, Role.USER);
-  }
+  };
 
-  public static async remove(
+  public static remove = async (
     request: Request<Record<string, never>, Record<string, never>, IdsBody>,
     response: Response,
-  ) {
+  ) => {
     try {
       const { ids } = request.body;
       const currentUserId = request.user?.sub ?? "";
@@ -188,7 +188,7 @@ export class AdminUsersController {
     } catch (error) {
       return handleError(error, response);
     }
-  }
+  };
 
   private static async updateRole(
     request: Request<Record<string, never>, UpdateUsersResponse, UpdateUsersRequest>,

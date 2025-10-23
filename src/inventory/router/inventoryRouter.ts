@@ -85,3 +85,8 @@ inventoryRouter.put<InventoryParameters>(
   Validator.requestBodyValidate(InventoryIdFormatUpdateBodySchema),
   InventoryController.updateIdFormat,
 );
+
+inventoryRouter.get<InventoryParameters>(
+  "/:inventoryId/statistics",
+  InventoryController.getStatistics,
+);

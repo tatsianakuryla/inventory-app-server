@@ -15,14 +15,14 @@ adminRouter.get(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestQueryValidate(UsersQuerySchema),
-  (req, res) => AdminUsersController.getUsers(req, res),
+  AdminUsersController.getUsers,
 );
 adminRouter.post(
   "/users/block",
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  (req, res) => AdminUsersController.block(req, res),
+  AdminUsersController.block,
 );
 
 adminRouter.post(
@@ -30,7 +30,7 @@ adminRouter.post(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  (req, res) => AdminUsersController.unblock(req, res),
+  AdminUsersController.unblock,
 );
 
 adminRouter.post(
@@ -38,7 +38,7 @@ adminRouter.post(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  (req, res) => AdminUsersController.promote(req, res),
+  AdminUsersController.promote,
 );
 
 adminRouter.post(
@@ -46,7 +46,7 @@ adminRouter.post(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  (req, res) => AdminUsersController.demote(req, res),
+  AdminUsersController.demote,
 );
 
 adminRouter.delete(
@@ -54,5 +54,5 @@ adminRouter.delete(
   requireAuthAndNotBlocked,
   requireAdmin,
   Validator.requestBodyValidate(UpdateUsersRequestSchema),
-  (req, res) => AdminUsersController.remove(req, res),
+  AdminUsersController.remove,
 );

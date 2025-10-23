@@ -472,4 +472,97 @@ export class InventoryController {
       return handleError(error, response);
     }
   };
+
+  public static getStatistics = async (
+    request: Request<InventoryParameters>,
+    response: Response,
+  ) => {
+    try {
+      const { inventoryId } = request.params;
+      const inventory = await prisma.inventory.findUnique({
+        where: { id: inventoryId },
+        select: { id: true, isPublic: true, ownerId: true },
+      });
+      if (!inventory) {
+        return response.status(404).json({ error: "Inventory not found" });
+      }
+      const items = await prisma.item.findMany({
+        where: { inventoryId },
+        select: {
+          text1: true,
+          text2: true,
+          text3: true,
+          long1: true,
+          long2: true,
+          long3: true,
+          num1: true,
+          num2: true,
+          num3: true,
+          createdAt: true,
+        },
+      });
+      const itemsCount = items.length;
+      if (itemsCount === 0) {
+        return response.json({
+          itemsCount: 0,
+          numericFields: {},
+          textFields: {},
+          firstItemCreatedAt: null,
+          lastItemCreatedAt: null,
+        });
+      }
+      const numericStats: Record<
+        string,
+        { avg: number | null; min: number | null; max: number | null; count: number }
+      > = {};
+
+      for (const field of ["num1", "num2", "num3"] as const) {
+        const values = items.map((item) => item[field]).filter((value) => value !== null);
+        if (values.length > 0) {
+          const sum = values.reduce((acc, value) => acc + value, 0);
+          numericStats[field] = {
+            avg: sum / values.length,
+            min: Math.min(...values),
+            max: Math.max(...values),
+            count: values.length,
+          };
+        } else {
+          numericStats[field] = {
+            avg: null,
+            min: null,
+            max: null,
+            count: 0,
+          };
+        }
+      }
+      const textStats: Record<string, Array<{ value: string; count: number }>> = {};
+      for (const field of ["text1", "text2", "text3", "long1", "long2", "long3"] as const) {
+        const values = items.map((item) => item[field]).filter((value) => value !== null);
+        if (values.length > 0) {
+          const frequency: Record<string, number> = {};
+          values.forEach((val) => {
+            frequency[val] = (frequency[val] || 0) + 1;
+          });
+          textStats[field] = Object.entries(frequency)
+            .map(([value, count]) => ({ value, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+        } else {
+          textStats[field] = [];
+        }
+      }
+      const dates = items.map((item) => item.createdAt.getTime());
+      const firstItemCreatedAt = new Date(Math.min(...dates)).toISOString();
+      const lastItemCreatedAt = new Date(Math.max(...dates)).toISOString();
+      return response.json({
+        itemsCount,
+        numericFields: numericStats,
+        textFields: textStats,
+        firstItemCreatedAt,
+        lastItemCreatedAt,
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  };
 }

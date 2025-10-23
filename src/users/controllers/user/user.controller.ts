@@ -117,12 +117,9 @@ export class UserController {
         return response.status(403).json({ error: "The user is blocked" });
       }
       if (!user.password) {
-        return response
-          .status(400)
-          .json({
-            error:
-              "This account uses social login. Sign in with Google/Facebook or set a password.",
-          });
+        return response.status(400).json({
+          error: "This account uses social login. Sign in with Google/Facebook or set a password.",
+        });
       }
       const isPasswordValid = await Hash.verifyPassword(password, user.password);
       if (!isPasswordValid)
