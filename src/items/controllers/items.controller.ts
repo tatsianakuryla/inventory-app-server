@@ -124,7 +124,6 @@ export class ItemsController {
           throw error;
         }
       }
-      return response.status(500).json({ error: "Failed to create item" });
     } catch (error) {
       if (isPrismaUniqueError(error)) {
         return response.status(409).json({ error: "Duplicate customId in this inventory" });

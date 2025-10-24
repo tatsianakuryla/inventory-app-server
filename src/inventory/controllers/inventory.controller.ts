@@ -1,4 +1,4 @@
-import prisma from "../../shared/db/db.ts";
+import prisma, { DEFAULT_ID_SCHEMA } from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
 import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
 import type {
@@ -41,6 +41,9 @@ export class InventoryController {
         name,
         isPublic,
         ownerId,
+        InventoryIdFormat: {
+          create: { schema: DEFAULT_ID_SCHEMA },
+        },
         ...(description !== undefined && { description }),
         ...(imageUrl !== undefined && { imageUrl }),
         ...(categoryId !== undefined && { categoryId }),
