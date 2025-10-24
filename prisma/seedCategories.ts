@@ -1,4 +1,4 @@
-import prisma from "../db/db.ts";
+import prisma from "../src/shared/db/db.ts";
 
 const DEFAULT_CATEGORIES = [
   "Equipment",

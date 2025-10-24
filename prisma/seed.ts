@@ -1,6 +1,6 @@
-import prisma from "../db/db.ts";
+import prisma from "../src/shared/db/db.ts";
 import { Role } from "@prisma/client";
-import { SUPERADMINS } from "../../users/shared/constants/constants.ts";
+import { SUPERADMINS } from "../src/users/shared/constants/constants.ts";
 import { seedCategories } from "./seedCategories.ts";
 type PickedUser = { email: string; id: string; role: Role };
 
