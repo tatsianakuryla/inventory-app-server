@@ -64,7 +64,7 @@ export class DiscussionsController {
         select: { id: true },
       });
       if (!inventory) {
-        return response.status(404).json({ error: "Inventory not found" });
+        return response.status(404).json({ message: "Inventory not found" });
       }
       const created = await prisma.discussionPost.create({
         data: {
@@ -104,12 +104,12 @@ export class DiscussionsController {
         select: { authorId: true },
       });
       if (!post) {
-        return response.status(404).json({ error: "Discussion post not found" });
+        return response.status(404).json({ message: "Discussion post not found" });
       }
       const isAuthor = post.authorId === userId;
       const isAdmin = userRole === Role.ADMIN;
       if (!isAuthor && !isAdmin) {
-        return response.status(403).json({ error: "Forbidden" });
+        return response.status(403).json({ message: "Forbidden" });
       }
       await prisma.discussionPost.delete({
         where: { id: discussionId },

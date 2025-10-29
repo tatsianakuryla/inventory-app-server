@@ -56,7 +56,7 @@ const errorHandler: ErrorRequestHandler = (error, request, response, next) => {
   if (response.headersSent) return next(error);
   const { status = 500, message = "Server error" } = error;
   console.error(error);
-  return response.status(status).json({ error: message });
+  return response.status(status).json({ message });
 };
 app.use(errorHandler);
 

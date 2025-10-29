@@ -67,7 +67,7 @@ export class CategoryController {
       return response.status(201).json(created);
     } catch (error) {
       if (isPrismaUniqueError(error)) {
-        return response.status(409).json({ error: "Category with this name already exists" });
+        return response.status(409).json({ message: "Category with this name already exists" });
       }
       return handleError(error, response);
     }
@@ -84,7 +84,7 @@ export class CategoryController {
       return response.json(updated);
     } catch (error) {
       if (isPrismaUniqueError(error)) {
-        return response.status(409).json({ error: "Category with this name already exists" });
+        return response.status(409).json({ message: "Category with this name already exists" });
       }
       return handleError(error, response);
     }
@@ -98,7 +98,7 @@ export class CategoryController {
       });
       if (count > 0) {
         return response.status(409).json({
-          error: `Cannot delete category. ${count} inventor${count === 1 ? "y" : "ies"} still use this category.`,
+          message: `Cannot delete category. ${count} inventor${count === 1 ? "y" : "ies"} still use this category.`,
           inventoriesCount: count,
         });
       }

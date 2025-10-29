@@ -77,7 +77,7 @@ export class ItemsController {
         where: { id: itemId, inventoryId },
         select: ITEM_SELECTED,
       });
-      if (!item) return response.status(404).json({ error: "Not found" });
+      if (!item) return response.status(404).json({ message: "Not found" });
       return response.json(item);
     } catch (error) {
       return handleError(error, response);
@@ -126,10 +126,10 @@ export class ItemsController {
       }
     } catch (error) {
       if (isPrismaUniqueError(error)) {
-        return response.status(409).json({ error: "Duplicate customId in this inventory" });
+        return response.status(409).json({ message: "Duplicate customId in this inventory" });
       }
       if (isPrismaForeignKeyError(error)) {
-        return response.status(400).json({ error: "Invalid inventoryId" });
+        return response.status(400).json({ message: "Invalid inventoryId" });
       }
       return handleError(error, response);
     }
@@ -141,7 +141,7 @@ export class ItemsController {
       const body = request.body as ItemUpdateRequest;
       const { version, ...patch } = body;
       if (patch.customId !== undefined) {
-        return response.status(400).json({ error: "customId is immutable" });
+        return response.status(400).json({ message: "customId is immutable" });
       }
       const updated = await prisma.item.update({
         where: { id_version: { id: itemId, version } },
@@ -166,14 +166,14 @@ export class ItemsController {
         select: ITEM_SELECTED,
       });
       if (updated.inventoryId !== inventoryId) {
-        return response.status(400).json({ error: "Inventory mismatch" });
+        return response.status(400).json({ message: "Inventory mismatch" });
       }
       return response.json(updated);
     } catch (error) {
       if (isPrismaVersionConflictError(error))
-        return response.status(409).json({ error: "Version conflict" });
+        return response.status(409).json({ message: "Version conflict" });
       if (isPrismaUniqueError(error))
-        return response.status(409).json({ error: "Duplicate customId in this inventory" });
+        return response.status(409).json({ message: "Duplicate customId in this inventory" });
       return handleError(error, response);
     }
   };
@@ -207,7 +207,7 @@ export class ItemsController {
       await prisma.itemLike.create({ data: { itemId, userId } });
       return response.status(204).end();
     } catch (error) {
-      if (isPrismaUniqueError(error)) return response.status(409).json({ error: "Already liked" });
+      if (isPrismaUniqueError(error)) return response.status(409).json({ message: "Already liked" });
       return handleError(error, response);
     }
   };

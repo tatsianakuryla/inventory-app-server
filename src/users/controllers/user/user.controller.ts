@@ -18,6 +18,7 @@ import {
   isPrismaUniqueError,
   isPrismaVersionConflictError,
 } from "../../../shared/typeguards/typeguards.ts";
+import {BACKEND_ERRORS} from "../../../shared/constants/constants.ts";
 
 export class UserController {
   public static getMe = async (
@@ -30,7 +31,7 @@ export class UserController {
         where: { id: sub },
         select: USER_SELECTED,
       });
-      if (!user) return response.status(401).json({ error: "Unauthorized" });
+      if (!user) return response.status(401).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
       return response.json({
         ...user,
         createdAt: user.createdAt.toISOString(),
@@ -41,7 +42,7 @@ export class UserController {
     }
   };
 
-  public static autocompleteGetUsers = async (request: Request, response: Response) => {
+  public static autocompleteGetUsers = async (_request: Request, response: Response) => {
     try {
       const query = response.locals.query as AutocompleteQuery | undefined;
       const { search, sortBy = "name", order = "asc", limit = 10 } = query || { search: "" };
@@ -73,7 +74,7 @@ export class UserController {
       return response.status(201).json(newUser);
     } catch (error: unknown) {
       if (isPrismaUniqueError(error)) {
-        return response.status(409).json({ error: "User with such an email already exists" });
+        return response.status(409).json({ message: BACKEND_ERRORS.USER_ALREADY_EXISTS });
       }
       return handleError(error, response);
     }
@@ -112,18 +113,18 @@ export class UserController {
       const user = await prisma.user.findUnique({
         where: { email: EmailSchema.parse(email) },
       });
-      if (!user) return response.status(401).json({ error: "Invalid email or password" });
+      if (!user) return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
       if (user.status === Status.BLOCKED) {
-        return response.status(403).json({ error: "The user is blocked" });
+        return response.status(403).json({ message: BACKEND_ERRORS.USER_BLOCKED });
       }
       if (!user.password) {
         return response.status(400).json({
-          error: "This account uses social login. Sign in with Google/Facebook or set a password.",
+          message: BACKEND_ERRORS.SOCIAL_ACCOUNT_NOT_LINKED,
         });
       }
       const isPasswordValid = await Hash.verifyPassword(password, user.password);
       if (!isPasswordValid)
-        return response.status(401).json({ error: "Invalid email or password" });
+        return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
       await this.promoteSuperAdmins(user);
       const token = TokenController.createTokenForUser(user);
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
@@ -167,9 +168,13 @@ export class UserController {
       if (isPrismaVersionConflictError(error)) {
         return response
           .status(409)
-          .json({ error: "Version conflict. Please refresh and try again." });
+          .json({ message: BACKEND_ERRORS.VERSION_CONFLICT });
       }
       return handleError(error, response);
     }
+  };
+
+  public static logout = async (_request: Request, response: Response): Promise<Response> => {
+    return response.status(204).end();
   };
 }

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Language, Role, Theme, Status, Prisma } from "@prisma/client";
 import { IdSchema, type ResponseError } from "../../../shared/types/types.ts";
 
-export const EmailSchema = z.email("Invalid email").trim().toLowerCase();
+export const EmailSchema = z.string().email("Invalid email").trim().toLowerCase();
 const PasswordSchema = z
   .string()
   .trim()
@@ -21,12 +21,12 @@ export const SafeUserSchema = z.object({
   id: z.string(),
   email: z.email(),
   name: z.string(),
-  role: z.enum(Role),
-  status: z.enum(Status),
-  language: z.enum(Language),
-  theme: z.enum(Theme),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
+  role: z.nativeEnum(Role),
+  status: z.nativeEnum(Status),
+  language: z.nativeEnum(Language),
+  theme: z.nativeEnum(Theme),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
   version: z.number(),
 });
 
@@ -79,7 +79,7 @@ export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
 
 export const PayloadSchema = z.object({
   sub: z.string().min(1),
-  role: z.enum(Role),
+  role: z.nativeEnum(Role),
   version: z.number().optional(),
 });
 
@@ -111,8 +111,8 @@ export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | Re
 
 export const UpdateProfileRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100).optional(),
-  language: z.enum(Language).optional(),
-  theme: z.enum(Theme).optional(),
+  language: z.nativeEnum(Language).optional(),
+  theme: z.nativeEnum(Theme).optional(),
   version: VersionSchema,
 });
 

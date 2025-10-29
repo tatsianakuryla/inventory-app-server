@@ -4,6 +4,7 @@ import { envStrict } from "../../shared/helpers/helpers.ts";
 import { toExpiresIn } from "../../shared/typeguards/typeguards.ts";
 import { type Payload, PayloadSchema, type UserForToken } from "../types/controllers.types.ts";
 import { type Request } from "express";
+import { BACKEND_ERRORS } from "../../../shared/constants/constants.ts";
 
 const ACCESS_TTL = toExpiresIn(process.env.ACCESS_TTL?.trim(), ms("120m"));
 const JWT_SECRET = envStrict("JWT_SECRET");
@@ -24,7 +25,7 @@ export class TokenController {
       clockTolerance: 10,
     });
     const parsed = PayloadSchema.safeParse(decoded);
-    if (!parsed.success) throw new Error("Invalid token Payload");
+    if (!parsed.success) throw new Error(BACKEND_ERRORS.INVALID_TOKEN);
     return parsed.data;
   }
 

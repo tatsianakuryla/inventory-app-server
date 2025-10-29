@@ -48,3 +48,5 @@ usersRouter.post(
   Validator.requestBodyValidate(FacebookLoginSchema),
   SocialController.facebookLogin,
 );
+
+usersRouter.post("/logout", requireAuthAndNotBlocked, UserController.logout);

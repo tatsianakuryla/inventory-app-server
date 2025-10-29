@@ -27,6 +27,7 @@ import {
   type WritableKey,
 } from "../shared/typeguards/typeguards.ts";
 import { VERSION_CONFLICT_ERROR_MESSAGE } from "../../shared/constants/constants.ts";
+import { BACKEND_ERRORS } from "../../shared/constants/constants.ts";
 
 export class InventoryController {
   public static create = async (
@@ -36,7 +37,7 @@ export class InventoryController {
     try {
       const { name, description, isPublic, imageUrl, categoryId } = request.body;
       const ownerId = request.user?.sub;
-      if (!ownerId) return response.status(401).json({ error: "Unauthorized" });
+      if (!ownerId) return response.status(401).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
       const data = {
         name,
         isPublic,
@@ -55,10 +56,10 @@ export class InventoryController {
       return response.status(201).json(created);
     } catch (error: unknown) {
       if (isPrismaUniqueError(error)) {
-        return response.status(409).json({ error: "Inventory already exists" });
+        return response.status(409).json({ message: BACKEND_ERRORS.RESOURCE_ALREADY_EXISTS });
       }
       if (isPrismaForeignKeyError(error)) {
-        return response.status(400).json({ error: "Invalid categoryId" });
+        return response.status(400).json({ message: BACKEND_ERRORS.INVALID_INPUT });
       }
       return handleError(error, response);
     }
@@ -120,13 +121,13 @@ export class InventoryController {
         InventoryIdFormat: true,
       },
     });
-    if (!inventory) return response.status(404).json({ error: "Not found" });
+    if (!inventory) return response.status(404).json({ message: BACKEND_ERRORS.RESOURCE_NOT_FOUND });
     const canView =
       me?.role === Role.ADMIN ||
       inventory.isPublic ||
       me?.id === inventory.ownerId ||
       inventory.access.some((access) => access.userId === me?.id);
-    if (!canView) return response.status(403).json({ error: "Forbidden" });
+    if (!canView) return response.status(403).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
     const { access: _access, ownerId: _ownerId, ...safe } = inventory;
     return response.json(safe);
   };
@@ -157,9 +158,9 @@ export class InventoryController {
       return response.json(updated);
     } catch (error: unknown) {
       if (isPrismaVersionConflictError(error))
-        return response.status(409).json({ error: "Version conflict" });
+        return response.status(409).json({ message: BACKEND_ERRORS.VERSION_CONFLICT });
       if (isPrismaForeignKeyError(error))
-        return response.status(400).json({ error: "Invalid categoryId" });
+        return response.status(400).json({ message: BACKEND_ERRORS.INVALID_INPUT });
       return handleError(error, response);
     }
   };
@@ -256,7 +257,7 @@ export class InventoryController {
           select: { userId: true, inventoryRole: true },
         }),
       ]);
-      if (!inventory) return response.status(404).json({ error: "Inventory not found" });
+      if (!inventory) return response.status(404).json({ message: "Inventory not found" });
       const { toCreate, toUpdate, unchanged, skippedInvalidOwnerUserIds } =
         this.partitionAccessChanges(accesses, inventory.ownerId, currentAccess);
       if (toCreate.length + toUpdate.length > 0) {
@@ -333,7 +334,7 @@ export class InventoryController {
           select: { userId: true },
         }),
       ]);
-      if (!inventory) return response.status(404).json({ error: "Inventory not found" });
+      if (!inventory) return response.status(404).json({ message: "Inventory not found" });
       const { toDeleteUserIds, skippedOwnerUserIds, notFoundUserIds } = this.partitionRevokedAccess(
         currentAccess,
         userIds,
@@ -381,7 +382,7 @@ export class InventoryController {
       const { inventoryId } = request.params;
       const data = this.buildFieldsPatch(patch);
       if (Object.keys(data).length === 0) {
-        return response.status(400).json({ error: "Empty or invalid patch" });
+        return response.status(400).json({ message: BACKEND_ERRORS.INVALID_INPUT });
       }
       const saved = await this.persistInventoryFields(inventoryId, version, data);
       return response
@@ -389,7 +390,7 @@ export class InventoryController {
         .json({ inventoryId: saved.inventoryId, version: saved.version });
     } catch (error: unknown) {
       if (isPrismaVersionConflictError(error)) {
-        return response.status(409).json({ error: VERSION_CONFLICT_ERROR_MESSAGE });
+        return response.status(409).json({ message: VERSION_CONFLICT_ERROR_MESSAGE });
       }
       return handleError(error, response);
     }
@@ -464,7 +465,7 @@ export class InventoryController {
         data: { schema, version: { increment: 1 } },
       });
       if (result.count !== 1) {
-        return response.status(409).json({ error: VERSION_CONFLICT_ERROR_MESSAGE });
+        return response.status(409).json({ message: VERSION_CONFLICT_ERROR_MESSAGE });
       }
       const final = await prisma.inventoryIdFormat.findUnique({
         where: { inventoryId },
@@ -487,7 +488,7 @@ export class InventoryController {
         select: { id: true, isPublic: true, ownerId: true },
       });
       if (!inventory) {
-        return response.status(404).json({ error: "Inventory not found" });
+        return response.status(404).json({ message: BACKEND_ERRORS.RESOURCE_NOT_FOUND });
       }
       const items = await prisma.item.findMany({
         where: { inventoryId },

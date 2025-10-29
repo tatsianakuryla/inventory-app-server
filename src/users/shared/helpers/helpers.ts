@@ -5,9 +5,9 @@ import { isError } from "../../../shared/typeguards/typeguards.ts";
 
 export function handleError(error: unknown, response: Response) {
   if (isError(error)) {
-    return response.status(500).json({ error: error.message });
+    return response.status(500).json({ message: error.message });
   }
-  return response.status(500).json({ error: "Internal Server Error" });
+  return response.status(500).json({ message: "Internal Server Error" });
 }
 
 export function toUserOrderBy(

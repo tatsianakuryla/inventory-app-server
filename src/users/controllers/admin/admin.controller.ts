@@ -16,7 +16,7 @@ import type {
 
 export class AdminUsersController {
   public static getUsers = async (
-    request: Request,
+    _request: Request,
     response: Response<GetUsersResponse, { query: UsersQuery }>,
   ) => {
     try {

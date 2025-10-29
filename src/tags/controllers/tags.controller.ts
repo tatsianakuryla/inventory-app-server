@@ -64,7 +64,7 @@ export class TagsController {
       return response.status(201).json(created);
     } catch (error) {
       if (isPrismaUniqueError(error)) {
-        return response.status(409).json({ error: "Tag with this name already exists" });
+        return response.status(409).json({ message: "Tag with this name already exists" });
       }
       return handleError(error, response);
     }

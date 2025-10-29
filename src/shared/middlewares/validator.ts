@@ -28,7 +28,7 @@ export class Validator {
   private static handleError(error: unknown, response: Response, next: NextFunction) {
     if (isZodError(error)) {
       return response.status(400).json({
-        error: error.issues.map((issue) => ({
+        message: error.issues.map((issue) => ({
           message: issue.message,
         })),
       });

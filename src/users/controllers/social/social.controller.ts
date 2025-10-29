@@ -14,6 +14,7 @@ import { USER_SELECTED } from "../../shared/constants/constants.ts";
 import { Hash } from "../../security/Hash.ts";
 import { SUPERADMINS } from "../../shared/constants/constants.ts";
 import { fbDebugUrl, fbProfileUrl } from "./social.constants.ts";
+import {BACKEND_ERRORS} from "../../../shared/constants/constants.ts";
 
 export class SocialController {
   public static googleLogin = async (
@@ -27,16 +28,16 @@ export class SocialController {
         audience: process.env.GOOGLE_CLIENT_ID!,
       });
       const payload = ticket.getPayload();
-      if (!payload) return response.status(401).json({ error: "Invalid Google token" });
+      if (!payload) return response.status(401).json({ message: BACKEND_ERRORS.INVALID_TOKEN });
       const email = EmailSchema.parse(payload?.email || "");
       if (!email || payload.email_verified !== true) {
-        return response.status(400).json({ error: "Google email missing or not verified" });
+        return response.status(400).json({ message: BACKEND_ERRORS.INVALID_EMAIL });
       }
       const displayName = payload.name?.trim() || email.split("@")[0]! || "User";
       const user = await this.findOrCreateUserByProvider("google", payload.sub, email, displayName);
       return this.respondWithAuth(response, user);
     } catch {
-      return response.status(401).json({ error: "Google auth failed" });
+      return response.status(401).json({ message: BACKEND_ERRORS.SOCIAL_AUTH_ERROR });
     }
   };
 
@@ -48,21 +49,21 @@ export class SocialController {
       const { accessToken } = request.body;
       const debugJson = await this.getFbDebugJson(accessToken);
       if (!debugJson?.data?.is_valid) {
-        return response.status(401).json({ error: "Invalid Facebook token" });
+        return response.status(401).json({ message: BACKEND_ERRORS.INVALID_TOKEN });
       }
       if (debugJson?.data?.app_id !== process.env.FACEBOOK_APP_ID) {
-        return response.status(401).json({ error: "Facebook token app mismatch" });
+        return response.status(401).json({ message: BACKEND_ERRORS.INVALID_TOKEN });
       }
       const profile = await this.getFbProfileUrl(accessToken);
       const fbId = profile.id;
       const email = EmailSchema.parse(profile.email || "");
-      if (!fbId) return response.status(401).json({ error: "Facebook profile read failed" });
-      if (!email) return response.status(400).json({ error: "Facebook email not granted" });
+      if (!fbId) return response.status(401).json({ message: BACKEND_ERRORS.SOCIAL_AUTH_ERROR });
+      if (!email) return response.status(400).json({ message: BACKEND_ERRORS.INVALID_EMAIL });
       const displayName = profile?.name?.trim() || email.split("@")[0]! || "User";
       const user = await this.findOrCreateUserByProvider("facebook", fbId, email, displayName);
       return this.respondWithAuth(response, user);
     } catch {
-      return response.status(401).json({ error: "Facebook auth failed" });
+      return response.status(401).json({ message: BACKEND_ERRORS.SOCIAL_AUTH_ERROR });
     }
   };
 
@@ -134,7 +135,7 @@ export class SocialController {
 
   private static respondWithAuth(response: Response<ResponseBody>, user: SafeUser) {
     if (user.status === Status.BLOCKED) {
-      return response.status(403).json({ error: "User is blocked" });
+      return response.status(403).json({ message: BACKEND_ERRORS.USER_BLOCKED });
     }
     const token = TokenController.createTokenForUser(user);
     return response.json({ ...user, token });

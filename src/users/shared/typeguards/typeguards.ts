@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import type { RoleFromEnum, StatusFromEnum } from "../types/types.js";
+import type { RoleFromEnum, StatusFromEnum } from "../types/types.ts";
 
 export const toRole = (role: string): RoleFromEnum | null => {
   const userRole = role.toUpperCase();

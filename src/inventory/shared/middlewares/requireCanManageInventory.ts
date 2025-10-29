@@ -14,9 +14,9 @@ export async function requireCanManageInventory(
       request.params.inventoryId,
       userContext,
     );
-    if (!ok) return response.status(403).json({ error: "Forbidden" });
+    if (!ok) return response.status(403).json({ message: "Forbidden" });
     next();
   } catch {
-    response.status(403).json({ error: "Forbidden" });
+    response.status(403).json({ message: "Forbidden" });
   }
 }
