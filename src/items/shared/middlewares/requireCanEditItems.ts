@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import type { InventoryParameters } from "../../../inventory/shared/types/schemas.ts";
+import type { InventoryParameters } from "../../../inventory/shared/types/inventory.schemas.ts";
 import { buildUserContext } from "../../../inventory/shared/helpers/helpers.ts";
 import { InventoryAccessService } from "../../../inventory/inventoryAccessService/inventoryAccessService.ts";
 

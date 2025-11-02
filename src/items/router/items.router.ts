@@ -6,7 +6,7 @@ import {
   ItemCreateSchema,
   ItemUpdateSchema,
   DeleteItemsBodySchema,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/items.schemas.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
 import { ItemsController } from "../controllers/items.controller.ts";
 import { requireCanEditItems } from "../shared/middlewares/requireCanEditItems.ts";

@@ -1,3 +1,5 @@
+import {Prisma} from "@prisma/client";
+
 export const ITEM_SELECTED = {
   id: true,
   inventoryId: true,
@@ -22,4 +24,8 @@ export const ITEM_SELECTED = {
   bool2: true,
   bool3: true,
   _count: { select: { likes: true } },
-} as const;
+} satisfies Prisma.ItemSelect;
+
+export type ItemSelectedRow = Prisma.ItemGetPayload<{
+  select: typeof ITEM_SELECTED;
+}>;

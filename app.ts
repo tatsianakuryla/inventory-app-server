@@ -3,16 +3,16 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
-import { usersRouter } from "./src/users/router/usersRouter.ts";
-import { adminRouter } from "./src/users/router/adminRouter.ts";
+import { usersRouter } from "./src/users/router/users.router.ts";
+import { adminRouter } from "./src/users/router/admin.router.ts";
 import type { ErrorRequestHandler } from "express";
-import { inventoryRouter } from "./src/inventory/router/inventoryRouter.ts";
+import { inventoryRouter } from "./src/inventory/router/inventory.router.ts";
 import { ALLOWED_ORIGINS } from "./src/shared/constants/constants.ts";
-import { itemsRouter } from "./src/items/router/itemsRouter.ts";
-import { categoriesRouter } from "./src/categories/router/categoriesRouter.ts";
-import { tagsRouter } from "./src/tags/router/tagsRouter.ts";
-import { discussionsRouter } from "./src/discussions/router/discussionsRouter.ts";
-import { homeRouter } from "./src/home/router/homeRouter.ts";
+import { itemsRouter } from "./src/items/router/items.router.ts";
+import { categoriesRouter } from "./src/categories/router/categories.router.ts";
+import { tagsRouter } from "./src/tags/router/tags.router.ts";
+import { discussionsRouter } from "./src/discussions/router/discussions.router.ts";
+import { homeRouter } from "./src/home/router/home.router.ts";
 
 dotenv.config();
 const app = express();
@@ -44,7 +44,7 @@ app.use("/api/tags", tagsRouter);
 app.use("/api/discussions", discussionsRouter);
 app.use("/api/home", homeRouter);
 
-app.get("/", (request, response) => {
+app.get("/", (_request, response) => {
   return response.json({ status: "ok" });
 });
 
@@ -52,7 +52,7 @@ app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-const errorHandler: ErrorRequestHandler = (error, request, response, next) => {
+const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
   if (response.headersSent) return next(error);
   const { status = 500, message = "Server error" } = error;
   console.error(error);

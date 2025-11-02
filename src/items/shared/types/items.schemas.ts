@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { IdSchema } from "../../../shared/types/types.ts";
+import {
+  IdSchema,
+  OptionalUrlSchema,
+  VersionSchema,
+  PaginationQuerySchema,
+  SortOrderSchema,
+} from "../../../shared/types/types.ts";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 export const ItemParametersSchema = z.object({
@@ -9,12 +15,10 @@ export const ItemParametersSchema = z.object({
 
 export type ItemParameters = z.infer<typeof ItemParametersSchema>;
 
-export const ItemListQuerySchema = z.object({
-  search: z.string().trim().optional().default(""),
-  page: z.coerce.number().int().min(1).optional().default(1),
-  perPage: z.coerce.number().int().min(1).max(100).optional().default(20),
-  sortBy: z.enum(["createdAt", "updatedAt", "customId"]).optional().default("createdAt"),
-  order: z.enum(["asc", "desc"]).optional().default("desc"),
+export const ItemListQuerySchema = PaginationQuerySchema.extend({
+  search: z.string().trim().default(""),
+  sortBy: z.enum(["createdAt", "updatedAt", "customId"]).default("createdAt"),
+  order: SortOrderSchema.default("desc"),
 });
 
 export type ItemListQuery = z.infer<typeof ItemListQuerySchema>;
@@ -29,30 +33,30 @@ const baseFields = z.object({
   num1: z.number().nullable().optional(),
   num2: z.number().nullable().optional(),
   num3: z.number().nullable().optional(),
-  link1: z.url().trim().nullable().optional(),
-  link2: z.url().trim().nullable().optional(),
-  link3: z.url().trim().nullable().optional(),
+  link1: OptionalUrlSchema,
+  link2: OptionalUrlSchema,
+  link3: OptionalUrlSchema,
   bool1: z.boolean().nullable().optional(),
   bool2: z.boolean().nullable().optional(),
   bool3: z.boolean().nullable().optional(),
 });
 
 export const ItemCreateSchema = baseFields.extend({
-  customId: z.string().trim().min(1).max(256).optional(),
+  customId: z.string().trim().min(1, "Custom ID is required").max(96).optional(),
 });
 
 export type ItemCreateRequest = z.infer<typeof ItemCreateSchema>;
 
 export const ItemUpdateSchema = baseFields.extend({
-  version: z.number().int().min(1),
-  customId: z.string().trim().min(1).max(256).optional(),
+  version: VersionSchema,
+  customId: z.string().trim().min(1, "Custom ID is required").max(96).optional(),
 });
 
 export type ItemUpdateRequest = z.infer<typeof ItemUpdateSchema>;
 
 export const DeleteItemsBodySchema = z.object({
   items: z
-    .array(z.object({ id: IdSchema, version: z.number().int().min(1) }))
+    .array(z.object({ id: IdSchema, version: VersionSchema }))
     .min(1)
     .max(200),
 });

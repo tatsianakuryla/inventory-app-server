@@ -5,16 +5,16 @@ import { requireAdmin } from "../../shared/middlewares/requireAdmin.ts";
 import { CategoryController } from "../controllers/categories.controller.ts";
 import {
   CategoryParametersSchema,
-  CategoryQuerySchema,
+  CategoryListQuerySchema,
   CategoryCreateSchema,
   CategoryUpdateSchema,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/categories.schemas.ts";
 
 export const categoriesRouter = Router();
 
 categoriesRouter.get(
   "/",
-  Validator.requestQueryValidate(CategoryQuerySchema),
+  Validator.requestQueryValidate(CategoryListQuerySchema),
   CategoryController.getAll,
 );
 

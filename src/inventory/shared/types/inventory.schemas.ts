@@ -1,10 +1,17 @@
 import { z } from "zod";
-import { InventoryRole, Role, Prisma } from "@prisma/client";
-import { IdSchema } from "../../../shared/types/types.ts";
+import { Role, Prisma } from "@prisma/client";
+import {
+  IdSchema,
+  OptionalUrlSchema,
+  VersionSchema,
+  PaginationQuerySchema,
+  SortOrderSchema,
+} from "../../../shared/types/types.ts";
+
 export type UserContext = { id: string | null; role: Role } | undefined;
 
 export const InventoryParametersSchema = z.object({
-  inventoryId: z.string().min(1),
+  inventoryId: IdSchema,
 });
 
 export type InventoryParameters = z.infer<typeof InventoryParametersSchema>;
@@ -12,37 +19,33 @@ export type InventoryParameters = z.infer<typeof InventoryParametersSchema>;
 export const InventoryCreateRequestSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
-  isPublic: z.coerce.boolean().optional().default(false),
-  imageUrl: z.httpUrl().optional(),
+  isPublic: z.coerce.boolean().default(false),
+  imageUrl: OptionalUrlSchema,
   categoryId: z.coerce.number().int().optional(),
 });
 
 export type InventoryCreateRequest = z.infer<typeof InventoryCreateRequestSchema>;
 
-export const VersionSchema = z.coerce.number().int().min(1);
-
-export const InventoryListQuerySchema = z.object({
-  search: z.string().trim().optional().default(""),
-  page: z.coerce.number().int().min(1).optional().default(1),
-  perPage: z.coerce.number().int().min(1).max(100).optional().default(20),
-  sortBy: z.enum(["createdAt", "name"]).optional().default("createdAt"),
-  order: z.enum(["asc", "desc"]).optional().default("desc"),
+export const InventoryListQuerySchema = PaginationQuerySchema.extend({
+  search: z.string().trim().default(""),
+  sortBy: z.enum(["createdAt", "name"]).default("createdAt"),
+  order: SortOrderSchema.default("desc"),
 });
 
 export type InventoryListQuery = z.infer<typeof InventoryListQuerySchema>;
 
 export const InventoryUpdateRequestSchema = z.object({
-  name: z.string().trim().min(1).optional(),
+  name: z.string().trim().min(1, "Name is required").optional(),
   description: z.string().trim().optional(),
   isPublic: z.coerce.boolean().optional(),
-  imageUrl: z.httpUrl().nullable().optional(),
+  imageUrl: OptionalUrlSchema,
   categoryId: z.coerce.number().int().nullable().optional(),
   version: VersionSchema,
 });
 
 export const InventoryToDeleteSchema = z.object({
-  id: z.string().min(1),
-  version: z.coerce.number().int().min(1),
+  id: IdSchema,
+  version: VersionSchema,
 });
 
 export type InventoryToDelete = z.infer<typeof InventoryToDeleteSchema>;
@@ -54,8 +57,12 @@ export const DeleteInventoriesBodySchema = z.object({
 export type DeleteInventoriesBody = z.infer<typeof DeleteInventoriesBodySchema>;
 
 export const InventoryAccessEntrySchema = z.object({
-  userId: z.string(),
-  inventoryRole: z.enum(InventoryRole),
+  userId: IdSchema,
+  inventoryRole: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .pipe(z.enum(['OWNER', 'VIEWER', 'EDITOR'] as const)),
 });
 
 export type InventoryAccessEntry = z.infer<typeof InventoryAccessEntrySchema>;
@@ -83,7 +90,7 @@ export const RevokeAccessBodySchema = z
 export type RevokeAccessBody = z.infer<typeof RevokeAccessBodySchema>;
 
 export const UpdateInventoryFieldsBodySchema = z.object({
-  version: z.number().int().min(1),
+  version: VersionSchema,
   patch: z
     .record(z.string(), z.unknown())
     .refine((object) => Object.keys(object).length > 0, { message: "Empty patch" }),
@@ -103,7 +110,7 @@ export const JsonSchema: z.ZodType<Prisma.InputJsonValue> = z.lazy(() =>
 
 export const InventoryIdFormatUpdateBodySchema = z.object({
   schema: JsonSchema,
-  version: z.number().int().min(1).optional(),
+  version: VersionSchema.optional(),
 });
 
 export type InventoryIdFormatUpdateBody = z.infer<typeof InventoryIdFormatUpdateBodySchema>;

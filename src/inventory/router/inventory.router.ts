@@ -3,14 +3,14 @@ import { Validator } from "../../shared/middlewares/validator.ts";
 import {
   InventoryCreateRequestSchema,
   InventoryListQuerySchema,
-  InventoryToDeleteSchema,
+  DeleteInventoriesBodySchema,
   InventoryUpdateRequestSchema,
   UpsertAccessBodySchema,
   RevokeAccessBodySchema,
   type InventoryParameters,
   UpdateInventoryFieldsBodySchema,
   InventoryIdFormatUpdateBodySchema,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/inventory.schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
 import { requireCanManageInventory } from "../shared/middlewares/requireCanManageInventory.ts";
@@ -43,7 +43,7 @@ inventoryRouter.patch<InventoryParameters>(
 inventoryRouter.delete(
   "/",
   requireAuthAndNotBlocked,
-  Validator.requestBodyValidate(InventoryToDeleteSchema),
+  Validator.requestBodyValidate(DeleteInventoriesBodySchema),
   InventoryController.removeMany,
 );
 

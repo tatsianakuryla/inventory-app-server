@@ -8,9 +8,9 @@ import {
   TagCreateSchema,
   TagsQuerySchema,
   PopularTagsQuerySchema,
-  InventoryParametersSchema,
   UpdateInventoryTagsSchema,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/tags.schemas.ts";
+import {InventoryParametersSchema} from "../../inventory/shared/types/inventory.schemas.js";
 
 export const tagsRouter = Router();
 

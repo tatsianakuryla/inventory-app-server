@@ -3,11 +3,11 @@ import { Validator } from "../../shared/middlewares/validator.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
 import { DiscussionsController } from "../controllers/discussions.controller.ts";
 import {
-  InventoryParametersSchema,
   DiscussionIdParametersSchema,
   DiscussionCreateSchema,
   DiscussionsQuerySchema,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/discussions.schemas.ts";
+import { InventoryParametersSchema } from "../../inventory/shared/types/inventory.schemas.ts";
 
 export const discussionsRouter = Router();
 

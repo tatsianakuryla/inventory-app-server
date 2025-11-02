@@ -1,26 +1,21 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
-    "dev": "node app.ts",
-    "start": "node app.ts",
+    "dev": "tsx app.ts",
+    "start": "tsx app.ts",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
     "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "prisma:push": "prisma db push --schema prisma/schema.prisma",
     "prisma:studio": "prisma studio --schema prisma/schema.prisma",
     "prisma:seed": "prisma db seed --schema prisma/schema.prisma",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . -w",
     "format:check": "prettier . -c"
   },
   "prisma": {
-    "seed": "ts-node src/shared/prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts"
   },
-  "keywords": [],
+"keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",

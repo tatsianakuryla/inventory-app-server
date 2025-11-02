@@ -15,7 +15,7 @@ export const usersRouter = express.Router();
 usersRouter.get("/me", requireAuthAndNotBlocked, UserController.getMe);
 
 usersRouter.patch(
-  "/me",
+  "/update",
   requireAuthAndNotBlocked,
   Validator.requestBodyValidate(UpdateProfileRequestSchema),
   UserController.updateProfile,

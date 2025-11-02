@@ -5,6 +5,7 @@ import { Validator } from "../../shared/middlewares/validator.ts";
 import {
   UpdateUsersRequestSchema,
   UsersQuerySchema,
+  IdsBodySchema,
 } from "../controllers/types/controllers.types.ts";
 import { AdminUsersController } from "../controllers/admin/admin.controller.ts";
 
@@ -53,6 +54,6 @@ adminRouter.delete(
   "/users",
   requireAuthAndNotBlocked,
   requireAdmin,
-  Validator.requestBodyValidate(UpdateUsersRequestSchema),
+  Validator.requestBodyValidate(IdsBodySchema),
   AdminUsersController.remove,
 );

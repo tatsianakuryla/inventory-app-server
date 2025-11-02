@@ -1,25 +1,43 @@
 import { z } from "zod";
 import { Language, Role, Theme, Status, Prisma } from "@prisma/client";
-import { IdSchema, type ResponseError } from "../../../shared/types/types.ts";
+import { type ResponseError } from "../../../shared/types/types.ts";
+import {
+  EmailSchema,
+  RegisterRequestSchema,
+  type RegisterRequest,
+  LoginRequestSchema,
+  type LoginRequest,
+  UsersQuerySchema,
+  type UsersQuery,
+  AutocompleteQuerySchema,
+  type AutocompleteQuery,
+  UpdateProfileRequestSchema,
+  type UpdateProfileRequest,
+  UpdateUserSchema,
+  UpdateUsersRequestSchema,
+  type UpdateUsersRequest,
+  DeleteUsersBodySchema,
+  type DeleteUsersBody,
+  PayloadSchema,
+  type Payload,
+} from "../../shared/types/users.schemas.ts";
 
-export const EmailSchema = z.string().email("Invalid email").trim().toLowerCase();
-const PasswordSchema = z
-  .string()
-  .trim()
-  .min(6, "PasswordSchema must be at least 6 characters long");
-const VersionSchema = z.coerce.number().int().min(1);
+export { EmailSchema };
 
-export const RegisterRequestBodySchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  email: EmailSchema,
-  password: PasswordSchema,
-});
+export type RegisterRequestBody = RegisterRequest;
+export const RegisterRequestBodySchema = RegisterRequestSchema;
 
-export type RegisterRequestBody = z.infer<typeof RegisterRequestBodySchema>;
+export type LoginRequestBody = LoginRequest;
+export const LoginRequestBodySchema = LoginRequestSchema;
+
+export type IdsBody = DeleteUsersBody;
+export const IdsBodySchema = DeleteUsersBodySchema;
+
+export type UpdateUserProfile = z.infer<typeof UpdateUserSchema>;
 
 export const SafeUserSchema = z.object({
   id: z.string(),
-  email: z.email(),
+  email: z.string().email(),
   name: z.string(),
   role: z.nativeEnum(Role),
   status: z.nativeEnum(Status),
@@ -38,85 +56,28 @@ export const ResponseBodySchema = SafeUserSchema.extend({
 
 export type ResponseBody = z.infer<typeof ResponseBodySchema> | ResponseError;
 
-export const LoginRequestBodySchema = z.object({
-  email: EmailSchema,
-  password: PasswordSchema,
-});
-
-export type LoginRequestBody = z.infer<typeof LoginRequestBodySchema>;
-
-export const UsersQuerySchema = z.object({
-  sortBy: z
-    .enum(["name", "email", "role", "status", "createdAt", "updatedAt"])
-    .default("createdAt"),
-  order: z.enum(["asc", "desc"]).default("desc"),
-  search: z.string().trim().min(3).max(100).optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  perPage: z.coerce.number().int().min(1).max(100).default(20),
-});
-
-export type UsersQuery = z.infer<typeof UsersQuerySchema>;
-
-export const IdsBodySchema = z
-  .union([
-    IdSchema,
-    z.array(IdSchema).nonempty("At least one id is required").max(100, "Too many ids (max 100)"),
-  ])
-  .transform((value) => {
-    return { ids: Array.from(new Set(value)) };
-  });
-
-export type IdsBody = z.infer<typeof IdsBodySchema>;
-
-export const AutocompleteQuerySchema = z.object({
-  search: z.string().trim().min(1),
-  sortBy: z.enum(["name", "email"]).default("name"),
-  order: z.enum(["asc", "desc"]).default("asc"),
-  limit: z.coerce.number().int().min(1).max(25).default(10),
-});
-
-export type AutocompleteQuery = z.infer<typeof AutocompleteQuerySchema>;
-
-export const PayloadSchema = z.object({
-  sub: z.string().min(1),
-  role: z.nativeEnum(Role),
-  version: z.number().optional(),
-});
-
-export type Payload = z.infer<typeof PayloadSchema>;
-
-export const UpdateUserRequestSchema = z.object({
-  id: IdSchema,
-  version: VersionSchema,
-});
-
-export const UpdateUsersRequestSchema = z
-  .union([UpdateUserRequestSchema, z.array(UpdateUserRequestSchema)])
-  .transform((value) => (Array.isArray(value) ? value : [value]))
-  .refine((array) => array.length > 0, { message: "At least one user is required" })
-  .refine((array) => array.length <= 100, { message: "Too many users (max 100)" });
-
-export type UpdateUserProfile = z.infer<typeof UpdateUserRequestSchema>;
-export type UpdateUsersRequest = z.infer<typeof UpdateUsersRequestSchema>;
-
 export const UpdateUsersResponseSchema = z.object({
   updated: z.number(),
-  updatedIds: z.array(IdSchema),
+  updatedIds: z.array(z.string()),
   skipped: z.number(),
-  skippedIds: z.array(IdSchema),
+  skippedIds: z.array(z.string()),
   message: z.string(),
 });
 
 export type UpdateUsersResponse = z.infer<typeof UpdateUsersResponseSchema> | ResponseError;
 
-export const UpdateProfileRequestSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100).optional(),
-  language: z.nativeEnum(Language).optional(),
-  theme: z.nativeEnum(Theme).optional(),
-  version: VersionSchema,
-});
-
-export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>;
+export {
+  UsersQuerySchema,
+  type UsersQuery,
+  AutocompleteQuerySchema,
+  type AutocompleteQuery,
+  PayloadSchema,
+  type Payload,
+  UpdateProfileRequestSchema,
+  type UpdateProfileRequest,
+  UpdateUsersRequestSchema,
+  type UpdateUsersRequest,
+};
 
 export interface UserForToken {
   id: string;
