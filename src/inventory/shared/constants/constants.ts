@@ -7,8 +7,17 @@ export const INVENTORY_SELECTED = {
   imageUrl: true,
   isPublic: true,
   ownerId: true,
+  owner: {
+    select: {
+      name: true,
+    },
+  },
   categoryId: true,
   createdAt: true,
   updatedAt: true,
   version: true,
 } satisfies Prisma.InventorySelect;
+
+export type InventorySelectedRow = Prisma.InventoryGetPayload<{
+  select: typeof INVENTORY_SELECTED;
+}>;

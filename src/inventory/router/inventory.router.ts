@@ -30,6 +30,13 @@ inventoryRouter.get(
   InventoryController.getAll,
 );
 
+inventoryRouter.get(
+  "/my/write-access",
+  requireAuthAndNotBlocked,
+  Validator.requestQueryValidate(InventoryListQuerySchema),
+  InventoryController.getMyWriteAccessInventories,
+);
+
 inventoryRouter.get<InventoryParameters>("/:inventoryId", InventoryController.getOne);
 
 inventoryRouter.patch<InventoryParameters>(

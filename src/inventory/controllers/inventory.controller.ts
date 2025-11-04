@@ -1,6 +1,6 @@
 import prisma, { DEFAULT_ID_SCHEMA } from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
-import { INVENTORY_SELECTED } from "../shared/constants/constants.ts";
+import {INVENTORY_SELECTED, type InventorySelectedRow} from "../shared/constants/constants.ts";
 import type {
   InventoryCreateRequest,
   InventoryParameters,
@@ -11,8 +11,8 @@ import type {
   RevokeAccessBody,
   UpdateInventoryFieldsBody,
   InventoryIdFormatUpdateBody,
-} from "../shared/types/schemas.ts";
-import type { InventoryListQuery } from "../shared/types/schemas.ts";
+} from "../shared/types/inventory.schemas.ts";
+import type { InventoryListQuery } from "../shared/types/inventory.schemas.ts";
 import {
   isPrismaForeignKeyError,
   isPrismaUniqueError,
@@ -65,71 +65,99 @@ export class InventoryController {
     }
   };
 
-  public static getAll = async (request: Request, response: Response) => {
-    const query = response.locals.query as InventoryListQuery;
-    const { search = "", page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
-    const finalPage = Math.max(1, page);
-    const skip = (finalPage - 1) * perPage;
-    const where = this.buildSearchWhere(request, search);
-    const [items, total] = await prisma.$transaction([
-      prisma.inventory.findMany({
-        where,
-        skip,
-        take: perPage,
-        orderBy: { [sortBy]: order },
-        select: INVENTORY_SELECTED,
-      }),
-      prisma.inventory.count({ where }),
-    ]);
-    const hasMore = skip + items.length < total;
-    return response.json({ items, total, page: finalPage, perPage, hasMore });
+  public static getAll = async (_request: Request, response: Response) => {
+    try {
+      const query = response.locals.query as InventoryListQuery;
+      const { search = "", page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
+      const finalPage = Math.max(1, page);
+      const skip = (finalPage - 1) * perPage;
+      let items, total;
+      if (search?.trim()) {
+        const tsquery = search.trim().split(/\s+/).filter(Boolean).join(" & ");
+        items = await prisma.$queryRaw<InventorySelectedRow[]>`
+          SELECT 
+            i.id, i.name, i.description, i."imageUrl", i."isPublic", i."ownerId",
+            i."categoryId", i."createdAt", i."updatedAt", i.version,
+            json_build_object('name', u.name) as owner
+          FROM "Inventory" i
+          LEFT JOIN "User" u ON i."ownerId" = u.id
+          WHERE i."searchVector" @@ to_tsquery('english', ${tsquery})
+          ORDER BY 
+            ts_rank(i."searchVector", to_tsquery('english', ${tsquery})) DESC,
+            i."createdAt" DESC
+          LIMIT ${perPage} OFFSET ${skip}
+        `;
+        const [{ count }] = await prisma.$queryRaw<[{ count: bigint }]>`
+          SELECT COUNT(*) as count
+          FROM "Inventory"
+          WHERE "searchVector" @@ to_tsquery('english', ${tsquery})
+        `;
+        total = Number(count);
+      } else {
+        const where: Prisma.InventoryWhereInput = {};
+        [items, total] = await prisma.$transaction([
+          prisma.inventory.findMany({
+            where,
+            skip,
+            take: perPage,
+            orderBy: { [sortBy]: order },
+            select: INVENTORY_SELECTED,
+          }),
+          prisma.inventory.count({ where }),
+        ]);
+      }
+
+      const hasMore = skip + items.length < total;
+      return response.json({ items, total, page: finalPage, perPage, hasMore });
+    } catch (error) {
+      return handleError(error, response);
+    }
   };
 
-  private static buildSearchWhere(request: Request, search: string): Prisma.InventoryWhereInput {
-    const searchWhere: Prisma.InventoryWhereInput = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { description: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : {};
-    const me = request.user ? { id: request.user.sub, role: request.user.role } : undefined;
-    const visibilityWhere: Prisma.InventoryWhereInput =
-      me?.role === Role.ADMIN
-        ? {}
-        : me
-          ? {
-              OR: [{ ownerId: me.id }, { isPublic: true }, { access: { some: { userId: me.id } } }],
-            }
-          : { isPublic: true };
-    return {
-      AND: [searchWhere, visibilityWhere],
-    };
-  }
+  public static getMyWriteAccessInventories = async (request: Request, response: Response) => {
+    try {
+      const userId = request.user?.sub;
+      if (!userId) return response.status(401).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
+      const query = response.locals.query as InventoryListQuery;
+      const { page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
+      const finalPage = Math.max(1, page);
+      const skip = (finalPage - 1) * perPage;
+      const inventoryAccesses = await prisma.inventoryAccess.findMany({
+        where: {
+          userId,
+          inventoryRole: { in: [InventoryRole.EDITOR, InventoryRole.OWNER] },
+        },
+        include: {
+          inventory: {
+            select: INVENTORY_SELECTED,
+          },
+        },
+      });
+      const allItems = inventoryAccesses
+        .filter((access) => access.inventory.ownerId !== userId)
+        .map((access) => access.inventory);
+      const total = allItems.length;
+      const items = allItems.slice(skip, skip + perPage);
+      const hasMore = skip + items.length < total;
+      return response.json({ items, total, page: finalPage, perPage, hasMore });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  };
 
   public static getOne = async (request: Request<InventoryParameters>, response: Response) => {
-    const me = request.user ? { id: request.user.sub, role: request.user.role } : undefined;
     const inventory = await prisma.inventory.findUnique({
       where: { id: request.params.inventoryId },
       select: {
         ...INVENTORY_SELECTED,
         isPublic: true,
         ownerId: true,
-        access: { select: { userId: true } },
         fields: true,
         InventoryIdFormat: true,
       },
     });
     if (!inventory) return response.status(404).json({ message: BACKEND_ERRORS.RESOURCE_NOT_FOUND });
-    const canView =
-      me?.role === Role.ADMIN ||
-      inventory.isPublic ||
-      me?.id === inventory.ownerId ||
-      inventory.access.some((access) => access.userId === me?.id);
-    if (!canView) return response.status(403).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
-    const { access: _access, ownerId: _ownerId, ...safe } = inventory;
-    return response.json(safe);
+    return response.json(inventory);
   };
 
   public static update = async (request: Request<InventoryParameters>, response: Response) => {

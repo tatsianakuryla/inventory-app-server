@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import { Role } from "@prisma/client";
-import type { UserContext } from "../types/schemas.ts";
+import type { UserContext } from "../types/inventory.schemas.ts";
 
 export function buildUserContext(request: Request): UserContext {
   if (!request.user) return undefined;
