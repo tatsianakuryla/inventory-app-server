@@ -4,15 +4,15 @@ import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
 import type {
   CategoryParameters,
-  CategoryQuery,
+  CategoryListQuery,
   CategoryCreate,
   CategoryUpdate,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/categories.schemas.ts";
 
 export class CategoryController {
   public static getAll = async (_request: Request, response: Response) => {
     try {
-      const query = response.locals.query as CategoryQuery;
+      const query = response.locals.query as CategoryListQuery;
       const { search = "", page = 1, perPage = 20, sortBy = "name", order = "asc" } = query ?? {};
       const finalPage = Math.max(1, Number(page) || 1);
       const take = Math.max(1, Number(perPage) || 20);
