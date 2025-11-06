@@ -174,7 +174,7 @@ export class UserController {
     }
   };
 
-  public static logout = async (_request: Request, response: Response): Promise<Response> => {
+  public static logout = (_request: Request, response: Response): Response => {
     return response.status(204).end();
   };
 }
