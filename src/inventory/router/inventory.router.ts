@@ -10,6 +10,7 @@ import {
   type InventoryParameters,
   UpdateInventoryFieldsBodySchema,
   InventoryIdFormatUpdateBodySchema,
+  BulkUpdateVisibilityBodySchema,
 } from "../shared/types/inventory.schemas.ts";
 import { InventoryController } from "../controllers/inventory.controller.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
@@ -37,6 +38,20 @@ inventoryRouter.get(
   InventoryController.getMyWriteAccessInventories,
 );
 
+inventoryRouter.patch(
+  "/visibility",
+  requireAuthAndNotBlocked,
+  Validator.requestBodyValidate(BulkUpdateVisibilityBodySchema),
+  InventoryController.bulkUpdateVisibility,
+);
+
+inventoryRouter.delete(
+  "/",
+  requireAuthAndNotBlocked,
+  Validator.requestBodyValidate(DeleteInventoriesBodySchema),
+  InventoryController.removeMany,
+);
+
 inventoryRouter.get<InventoryParameters>("/:inventoryId", InventoryController.getOne);
 
 inventoryRouter.patch<InventoryParameters>(
@@ -45,13 +60,6 @@ inventoryRouter.patch<InventoryParameters>(
   requireCanManageInventory,
   Validator.requestBodyValidate(InventoryUpdateRequestSchema),
   InventoryController.update,
-);
-
-inventoryRouter.delete(
-  "/",
-  requireAuthAndNotBlocked,
-  Validator.requestBodyValidate(DeleteInventoriesBodySchema),
-  InventoryController.removeMany,
 );
 
 inventoryRouter.get<InventoryParameters>(

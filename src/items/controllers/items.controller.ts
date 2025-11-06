@@ -108,7 +108,6 @@ export class ItemsController {
       });
       if (!item) return response.status(404).json({ message: "Not found" });
 
-      // Add isLikedByCurrentUser flag
       const isLiked = userId
         ? await prisma.itemLike.findUnique({
             where: { itemId_userId: { itemId: item.id, userId } },

@@ -56,6 +56,13 @@ export const DeleteInventoriesBodySchema = z.object({
 
 export type DeleteInventoriesBody = z.infer<typeof DeleteInventoriesBodySchema>;
 
+export const BulkUpdateVisibilityBodySchema = z.object({
+  inventoryIds: z.array(IdSchema).min(1).max(200, "Too many inventories"),
+  isPublic: z.boolean(),
+});
+
+export type BulkUpdateVisibilityBody = z.infer<typeof BulkUpdateVisibilityBodySchema>;
+
 export const InventoryAccessEntrySchema = z.object({
   userId: IdSchema,
   inventoryRole: z

@@ -21,7 +21,7 @@ import {
 } from "../../shared/typeguards/typeguards.ts";
 import { Prisma, Role, InventoryRole } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
-import type { Payload } from "../../users/controllers/types/controllers.types.ts";
+import type { Payload } from "../../users/shared/types/users.schemas.js";
 import {
   isFieldKey,
   type WritableFields,
@@ -119,25 +119,36 @@ export class InventoryController {
   public static getMyWriteAccessInventories = async (request: Request, response: Response) => {
     try {
       const userId = request.user?.sub;
+      const userRole = request.user?.role;
       if (!userId) return response.status(401).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
       const query = response.locals.query as InventoryListQuery;
       const { page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
       const finalPage = Math.max(1, page);
       const skip = (finalPage - 1) * perPage;
-      const inventoryAccesses = await prisma.inventoryAccess.findMany({
-        where: {
-          userId,
-          inventoryRole: { in: [InventoryRole.EDITOR, InventoryRole.OWNER] },
-        },
-        include: {
-          inventory: {
-            select: INVENTORY_SELECTED,
+      
+      let allItems: InventorySelectedRow[];
+      if (userRole === Role.ADMIN) {
+        const inventories = await prisma.inventory.findMany({
+          select: INVENTORY_SELECTED,
+        });
+        allItems = inventories.filter((inv) => inv.ownerId !== userId);
+      } else {
+        const inventoryAccesses = await prisma.inventoryAccess.findMany({
+          where: {
+            userId,
+            inventoryRole: { in: [InventoryRole.EDITOR, InventoryRole.OWNER] },
           },
-        },
-      });
-      const allItems = inventoryAccesses
-        .filter((access) => access.inventory.ownerId !== userId)
-        .map((access) => access.inventory);
+          include: {
+            inventory: {
+              select: INVENTORY_SELECTED,
+            },
+          },
+        });
+        allItems = inventoryAccesses
+          .filter((access) => access.inventory.ownerId !== userId)
+          .map((access) => access.inventory);
+      }
+      
       const total = allItems.length;
       const items = allItems.slice(skip, skip + perPage);
       const hasMore = skip + items.length < total;
@@ -215,6 +226,38 @@ export class InventoryController {
     }
   };
 
+  public static bulkUpdateVisibility = async (
+    request: Request<Record<string, never>, Record<string, never>, import("../shared/types/inventory.schemas.ts").BulkUpdateVisibilityBody>,
+    response: Response,
+  ) => {
+    try {
+      const me = request.user;
+      if (!me) {
+        return response.status(401).json({ message: "Unauthorized" });
+      }
+      const isAdmin = me.role === Role.ADMIN;
+      const { inventoryIds, isPublic } = request.body;
+
+      const allowed = isAdmin
+        ? inventoryIds
+        : (await this.getOwnedInventoryIds(inventoryIds, me));
+
+      const updated = await prisma.inventory.updateMany({
+        where: { id: { in: allowed } },
+        data: { isPublic },
+      });
+
+      return response.json({
+        updated: updated.count,
+        updatedIds: allowed,
+        skipped: inventoryIds.length - allowed.length,
+        skippedIds: inventoryIds.filter(id => !allowed.includes(id)),
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  };
+
   private static async getAllowedToRemove(inventories: InventoryToDelete[], me: Payload) {
     const ids = inventories.map((inventory) => inventory.id);
     const owners = await prisma.inventory.findMany({
@@ -225,6 +268,14 @@ export class InventoryController {
       owners.filter((owner) => owner.ownerId === me.sub).map((owner) => owner.id),
     );
     return inventories.filter((inventory) => ownerSet.has(inventory.id));
+  }
+
+  private static async getOwnedInventoryIds(inventoryIds: string[], me: Payload): Promise<string[]> {
+    const owned = await prisma.inventory.findMany({
+      where: { id: { in: inventoryIds }, ownerId: me.sub },
+      select: { id: true },
+    });
+    return owned.map(inventory => inventory.id);
   }
 
   private static filterDeletedSkippedIds(

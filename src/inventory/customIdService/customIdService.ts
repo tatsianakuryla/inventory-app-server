@@ -221,21 +221,32 @@ export class CustomIdService {
     const { regularExpressionPattern, likePrefix, likeSuffix } =
       this.buildSequenceExtractionHelpers(formatSchema);
 
+    const params: any[] = [regularExpressionPattern, inventoryId];
+    let paramIndex = 3;
+
+    let whereClauses = `"inventoryId" = $2`;
+
+    if (likePrefix) {
+      whereClauses += ` AND "customId" LIKE $${paramIndex}`;
+      params.push(`${likePrefix}%`);
+      paramIndex++;
+    }
+
+    if (likeSuffix) {
+      whereClauses += ` AND "customId" LIKE $${paramIndex}`;
+      params.push(`%${likeSuffix}`);
+    }
+
     const queryResultRows = await transactionClient.$queryRawUnsafe<{ maxseq: number }[]>(
       `
           SELECT MAX((matches[1])::int) AS maxseq
           FROM (
                    SELECT regexp_matches("customId", $1) AS matches
                    FROM "Item"
-                   WHERE "inventoryId" = $2
-                       ${likePrefix ? `AND "customId" LIKE $3` : ""}
-                         ${likeSuffix ? `AND "customId" LIKE $4` : ""}
+                   WHERE ${whereClauses}
                ) subquery
       `,
-      regularExpressionPattern,
-      inventoryId,
-      likePrefix ? `${likePrefix}%` : undefined,
-      likeSuffix ? `%${likeSuffix}` : undefined
+      ...params
     );
 
     const maximumSequenceValue: number = Number(queryResultRows?.[0]?.maxseq ?? 0);
