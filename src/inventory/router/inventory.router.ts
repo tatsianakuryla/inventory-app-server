@@ -97,3 +97,8 @@ inventoryRouter.get<InventoryParameters>(
   "/:inventoryId/statistics",
   InventoryController.getStatistics,
 );
+
+inventoryRouter.get<InventoryParameters>(
+  "/:inventoryId/id-format/preview",
+  InventoryController.previewCustomId,
+);

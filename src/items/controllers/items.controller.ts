@@ -8,19 +8,21 @@ import type {
   ItemCreateRequest,
   ItemUpdateRequest,
   DeleteItemsBody,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/items.schemas.ts";
 import {
+  isError,
   isPrismaForeignKeyError,
   isPrismaUniqueError,
   isPrismaVersionConflictError,
 } from "../../shared/typeguards/typeguards.ts";
-import { CustomIdService } from "../customIdService/customIdService.ts";
-import { ITEM_SELECTED } from "../shared/constants/constants.ts";
+import { CustomIdService } from "../../inventory/customIdService/customIdService.ts";
+import {ITEM_SELECTED, type ItemSelectedRow} from "../shared/constants/constants.ts";
 
 export class ItemsController {
   public static getMany = async (request: Request, response: Response) => {
     try {
       const { inventoryId } = request.params as Pick<ItemParameters, "inventoryId">;
+      const userId = request.user?.sub;
       const {
         search = "",
         page = 1,
@@ -34,37 +36,63 @@ export class ItemsController {
       const allowedSort = new Set(["createdAt", "updatedAt", "customId"]);
       const safeSortBy = allowedSort.has(sortBy) ? sortBy : "createdAt";
       const safeOrder: "asc" | "desc" = order === "asc" ? "asc" : "desc";
-      const where: Prisma.ItemWhereInput = {
-        inventoryId,
-        ...(search
-          ? {
-              OR: [
-                { customId: { contains: search, mode: "insensitive" } },
-                { text1: { contains: search, mode: "insensitive" } },
-                { text2: { contains: search, mode: "insensitive" } },
-                { text3: { contains: search, mode: "insensitive" } },
-                { long1: { contains: search, mode: "insensitive" } },
-                { long2: { contains: search, mode: "insensitive" } },
-                { long3: { contains: search, mode: "insensitive" } },
-                { link1: { contains: search, mode: "insensitive" } },
-                { link2: { contains: search, mode: "insensitive" } },
-                { link3: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : undefined),
-      };
-      const [items, total] = await prisma.$transaction([
-        prisma.item.findMany({
-          where,
-          select: ITEM_SELECTED,
-          skip,
-          take,
-          orderBy: { [safeSortBy]: safeOrder },
-        }),
-        prisma.item.count({ where }),
-      ]);
+      let items, total;
+      if (search?.trim()) {
+        const query = search.trim();
+        const orderByClause =
+          safeSortBy === "createdAt"
+            ? `"createdAt" ${safeOrder.toUpperCase()}`
+            : safeSortBy === "updatedAt"
+              ? `"updatedAt" ${safeOrder.toUpperCase()}`
+              : `"customId" ${safeOrder.toUpperCase()}`;
+        items = await prisma.$queryRaw<ItemSelectedRow[]>`
+          SELECT 
+            id, "customId", "inventoryId", "createdById", "createdAt", "updatedAt", version,
+            text1, text2, text3, long1, long2, long3, 
+            num1, num2, num3, link1, link2, link3,
+            bool1, bool2, bool3
+          FROM "Item"
+          WHERE "inventoryId" = ${inventoryId}
+            AND "searchVector" @@ websearch_to_tsquery('english', ${query})
+          ORDER BY 
+            ts_rank("searchVector", websearch_to_tsquery('english', ${query})) DESC,
+            ${Prisma.raw(orderByClause)}
+          LIMIT ${take} OFFSET ${skip}
+        `;
+        const [{ count }] = await prisma.$queryRaw<[{ count: bigint }]>`
+          SELECT COUNT(*) as count
+          FROM "Item"
+          WHERE "inventoryId" = ${inventoryId}
+            AND "searchVector" @@ websearch_to_tsquery('english', ${query})
+        `;
+        total = Number(count);
+      } else {
+        const where: Prisma.ItemWhereInput = { inventoryId };
+        [items, total] = await prisma.$transaction([
+          prisma.item.findMany({
+            where,
+            select: ITEM_SELECTED,
+            skip,
+            take,
+            orderBy: { [safeSortBy]: safeOrder },
+          }),
+          prisma.item.count({ where }),
+        ]);
+      }
+
+      const itemsWithLikeStatus = await Promise.all(
+        items.map(async (item) => {
+          const isLiked = userId
+            ? await prisma.itemLike.findUnique({
+                where: { itemId_userId: { itemId: item.id, userId } },
+              })
+            : null;
+          return { ...item, isLikedByCurrentUser: !!isLiked };
+        })
+      );
+
       const hasMore = skip + items.length < total;
-      return response.json({ items, total, page: finalPage, perPage: take, hasMore });
+      return response.json({ items: itemsWithLikeStatus, total, page: finalPage, perPage: take, hasMore });
     } catch (error) {
       return handleError(error, response);
     }
@@ -73,12 +101,21 @@ export class ItemsController {
   public static getOne = async (request: Request, response: Response) => {
     try {
       const { inventoryId, itemId } = request.params as ItemParameters;
+      const userId = request.user?.sub;
       const item = await prisma.item.findFirst({
         where: { id: itemId, inventoryId },
         select: ITEM_SELECTED,
       });
       if (!item) return response.status(404).json({ message: "Not found" });
-      return response.json(item);
+
+      // Add isLikedByCurrentUser flag
+      const isLiked = userId
+        ? await prisma.itemLike.findUnique({
+            where: { itemId_userId: { itemId: item.id, userId } },
+          })
+        : null;
+
+      return response.json({ ...item, isLikedByCurrentUser: !!isLiked });
     } catch (error) {
       return handleError(error, response);
     }
@@ -120,11 +157,17 @@ export class ItemsController {
           });
           return response.status(201).json(created);
         } catch (error) {
+          if (isError(error) && error.message.includes("exactly one SEQUENCE element")) {
+            return response.status(400).json({ message: "Cannot create item: Custom ID format must contain exactly one SEQUENCE element. Please configure the ID format in inventory settings." });
+          }
           if (isPrismaUniqueError(error) && i < MAX_RETRIES - 1) continue;
-          throw error;
+          return handleError(error, response);
         }
       }
     } catch (error) {
+      if (isError(error) && error.message.includes("exactly one SEQUENCE element")) {
+        return response.status(400).json({ message: "Cannot create item: Custom ID format must contain exactly one SEQUENCE element. Please configure the ID format in inventory settings." });
+      }
       if (isPrismaUniqueError(error)) {
         return response.status(409).json({ message: "Duplicate customId in this inventory" });
       }
@@ -140,12 +183,10 @@ export class ItemsController {
       const { inventoryId, itemId } = request.params as ItemParameters;
       const body = request.body as ItemUpdateRequest;
       const { version, ...patch } = body;
-      if (patch.customId !== undefined) {
-        return response.status(400).json({ message: "customId is immutable" });
-      }
       const updated = await prisma.item.update({
         where: { id_version: { id: itemId, version } },
         data: {
+          ...(patch.customId !== undefined && { customId: patch.customId }), // <-- РАЗРЕШАЕМ
           ...(patch.text1 !== undefined && { text1: patch.text1 }),
           ...(patch.text2 !== undefined && { text2: patch.text2 }),
           ...(patch.text3 !== undefined && { text3: patch.text3 }),
@@ -182,18 +223,43 @@ export class ItemsController {
     try {
       const { inventoryId } = request.params as Pick<ItemParameters, "inventoryId">;
       const { items } = request.body as DeleteItemsBody;
-      const ops = items.map(({ id, version }) =>
-        prisma.item.deleteMany({ where: { id, version, inventoryId } }),
+      if (!items.length) {
+        return response.json({
+          deleted: 0, deletedIds: [],
+          conflicts: 0, conflictIds: [],
+          skipped: 0, skippedIds: [],
+        });
+      }
+      const ids = items.map(i => i.id);
+      const existingItems = await prisma.item.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, inventoryId: true, version: true },
+      });
+      const existingById = new Map(existingItems.map((item) => [item.id, item]));
+      const skippedIds: string[] = [];
+      const candidates = items.filter(({ id }) => {
+        const row = existingById.get(id);
+        if (!row || row.inventoryId !== inventoryId) {
+          skippedIds.push(id);
+          return false;
+        }
+        return true;
+      });
+
+      const ops = candidates.map(({ id, version }) =>
+        prisma.item.deleteMany({ where: { id, version, inventoryId } })
       );
       const results = ops.length ? await prisma.$transaction(ops) : [];
       const deletedIds: string[] = [];
-      const conflicts: string[] = [];
-      results.forEach((r, i) => (r.count === 1 ? deletedIds : conflicts).push(items[i]!.id));
+      const conflictIds: string[] = [];
+      results.forEach((result, index) => (result.count === 1 ? deletedIds : conflictIds).push(candidates[index]!.id));
       return response.json({
         deleted: deletedIds.length,
         deletedIds,
-        conflicts: conflicts.length,
-        conflictIds: conflicts,
+        conflicts: conflictIds.length,
+        conflictIds,
+        skipped: skippedIds.length,
+        skippedIds,
       });
     } catch (error) {
       return handleError(error, response);

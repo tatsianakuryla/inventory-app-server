@@ -14,6 +14,7 @@ import type {
 } from "../shared/types/inventory.schemas.ts";
 import type { InventoryListQuery } from "../shared/types/inventory.schemas.ts";
 import {
+  isError,
   isPrismaForeignKeyError,
   isPrismaUniqueError,
   isPrismaVersionConflictError,
@@ -28,6 +29,7 @@ import {
 } from "../shared/typeguards/typeguards.ts";
 import { VERSION_CONFLICT_ERROR_MESSAGE } from "../../shared/constants/constants.ts";
 import { BACKEND_ERRORS } from "../../shared/constants/constants.ts";
+import { CustomIdService } from "../customIdService/customIdService.ts";
 
 export class InventoryController {
   public static create = async (
@@ -594,6 +596,24 @@ export class InventoryController {
         lastItemCreatedAt,
       });
     } catch (error) {
+      return handleError(error, response);
+    }
+  };
+
+  public static previewCustomId = async (
+    request: Request<InventoryParameters>,
+    response: Response,
+  ) => {
+    try {
+      const { inventoryId } = request.params;
+      const preview = await prisma.$transaction(async (tx) => {
+        return await CustomIdService.preview(tx, inventoryId);
+      });
+      return response.json({ preview });
+    } catch (error) {
+      if (isError(error) && error.message.includes("exactly one SEQUENCE element")) {
+        return response.status(400).json({ message: error.message });
+      }
       return handleError(error, response);
     }
   };
