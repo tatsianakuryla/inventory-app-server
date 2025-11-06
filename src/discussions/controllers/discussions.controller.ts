@@ -3,11 +3,11 @@ import prisma from "../../shared/db/db.ts";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { Role } from "@prisma/client";
 import type {
-  InventoryParameters,
   DiscussionIdParameters,
   DiscussionsQuery,
   DiscussionCreate,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/discussions.schemas.ts";
+import type {InventoryParameters} from "../../inventory/shared/types/inventory.schemas.js";
 
 export class DiscussionsController {
   public static getMany = async (request: Request, response: Response) => {
