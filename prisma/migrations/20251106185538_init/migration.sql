@@ -1,27 +1,61 @@
-/*
-  Warnings:
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 
-  - You are about to drop the column `image` on the `User` table. All the data in the column will be lost.
+-- CreateEnum
+CREATE TYPE "Language" AS ENUM ('EN', 'RU');
 
-*/
+-- CreateEnum
+CREATE TYPE "Theme" AS ENUM ('LIGHT', 'DARK');
+
+-- CreateEnum
+CREATE TYPE "Status" AS ENUM ('BLOCKED', 'ACTIVE');
+
+-- CreateEnum
+CREATE TYPE "InventoryRole" AS ENUM ('OWNER', 'VIEWER', 'EDITOR');
+
 -- CreateEnum
 CREATE TYPE "FieldState" AS ENUM ('HIDDEN', 'SHOWN');
 
--- DropIndex
-DROP INDEX "public"."Inventory_name_idx";
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "password" TEXT,
+    "imageUrl" TEXT,
+    "role" "Role" NOT NULL DEFAULT 'USER',
+    "status" "Status" NOT NULL DEFAULT 'ACTIVE',
+    "language" "Language" NOT NULL DEFAULT 'EN',
+    "theme" "Theme" NOT NULL DEFAULT 'LIGHT',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "googleId" TEXT,
+    "facebookId" TEXT,
 
--- AlterTable
-ALTER TABLE "Inventory" ADD COLUMN     "categoryId" INTEGER,
-ADD COLUMN     "imageUrl" TEXT,
-ADD COLUMN     "isPublic" BOOLEAN NOT NULL DEFAULT false;
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
 
--- AlterTable
-ALTER TABLE "User" DROP COLUMN "image",
-ADD COLUMN     "imageUrl" TEXT;
+-- CreateTable
+CREATE TABLE "Inventory" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "imageUrl" TEXT,
+    "categoryId" INTEGER,
+    "isPublic" BOOLEAN NOT NULL DEFAULT false,
+    "ownerId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT "Inventory_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "InventoryFields" (
     "inventoryId" TEXT NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
     "text1State" "FieldState" NOT NULL DEFAULT 'HIDDEN',
     "text1Name" TEXT,
     "text1Desc" TEXT,
@@ -88,6 +122,28 @@ CREATE TABLE "InventoryFields" (
 );
 
 -- CreateTable
+CREATE TABLE "InventoryAccess" (
+    "id" TEXT NOT NULL,
+    "inventoryId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "inventoryRole" "InventoryRole" NOT NULL,
+
+    CONSTRAINT "InventoryAccess_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "InventoryIdCounter" (
+    "id" TEXT NOT NULL,
+    "inventoryId" TEXT NOT NULL,
+    "scopeKey" TEXT NOT NULL,
+    "value" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "InventoryIdCounter_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Category" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
@@ -115,7 +171,7 @@ CREATE TABLE "InventoryTag" (
 CREATE TABLE "Item" (
     "id" TEXT NOT NULL,
     "inventoryId" TEXT NOT NULL,
-    "customId" TEXT NOT NULL,
+    "customId" VARCHAR(96) NOT NULL,
     "createdById" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -163,9 +219,64 @@ CREATE TABLE "InventoryIdFormat" (
     "inventoryId" TEXT NOT NULL,
     "schema" JSONB NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "InventoryIdFormat_pkey" PRIMARY KEY ("inventoryId")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_googleId_key" ON "User"("googleId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_facebookId_key" ON "User"("facebookId");
+
+-- CreateIndex
+CREATE INDEX "User_id_version_idx" ON "User"("id", "version");
+
+-- CreateIndex
+CREATE INDEX "User_name_idx" ON "User"("name");
+
+-- CreateIndex
+CREATE INDEX "User_role_idx" ON "User"("role");
+
+-- CreateIndex
+CREATE INDEX "User_status_idx" ON "User"("status");
+
+-- CreateIndex
+CREATE INDEX "Inventory_ownerId_idx" ON "Inventory"("ownerId");
+
+-- CreateIndex
+CREATE INDEX "Inventory_createdAt_idx" ON "Inventory"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "Inventory_id_version_idx" ON "Inventory"("id", "version");
+
+-- CreateIndex
+CREATE INDEX "Inventory_categoryId_idx" ON "Inventory"("categoryId");
+
+-- CreateIndex
+CREATE INDEX "Inventory_isPublic_createdAt_idx" ON "Inventory"("isPublic", "createdAt");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Inventory_id_version_key" ON "Inventory"("id", "version");
+
+-- CreateIndex
+CREATE INDEX "InventoryAccess_userId_idx" ON "InventoryAccess"("userId");
+
+-- CreateIndex
+CREATE INDEX "InventoryAccess_inventoryId_inventoryRole_idx" ON "InventoryAccess"("inventoryId", "inventoryRole");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "InventoryAccess_inventoryId_userId_key" ON "InventoryAccess"("inventoryId", "userId");
+
+-- CreateIndex
+CREATE INDEX "InventoryIdCounter_inventoryId_idx" ON "InventoryIdCounter"("inventoryId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "InventoryIdCounter_inventoryId_scopeKey_key" ON "InventoryIdCounter"("inventoryId", "scopeKey");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
@@ -183,7 +294,13 @@ CREATE INDEX "Item_inventoryId_idx" ON "Item"("inventoryId");
 CREATE INDEX "Item_id_version_idx" ON "Item"("id", "version");
 
 -- CreateIndex
+CREATE INDEX "Item_inventoryId_createdAt_idx" ON "Item"("inventoryId", "createdAt");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Item_inventoryId_customId_key" ON "Item"("inventoryId", "customId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Item_id_version_key" ON "Item"("id", "version");
 
 -- CreateIndex
 CREATE INDEX "ItemLike_userId_idx" ON "ItemLike"("userId");
@@ -192,16 +309,25 @@ CREATE INDEX "ItemLike_userId_idx" ON "ItemLike"("userId");
 CREATE INDEX "DiscussionPost_inventoryId_createdAt_idx" ON "DiscussionPost"("inventoryId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "Inventory_categoryId_idx" ON "Inventory"("categoryId");
-
--- CreateIndex
-CREATE INDEX "Inventory_isPublic_createdAt_idx" ON "Inventory"("isPublic", "createdAt");
+CREATE INDEX "InventoryIdFormat_updatedAt_idx" ON "InventoryIdFormat"("updatedAt");
 
 -- AddForeignKey
 ALTER TABLE "Inventory" ADD CONSTRAINT "Inventory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Inventory" ADD CONSTRAINT "Inventory_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "InventoryFields" ADD CONSTRAINT "InventoryFields_inventoryId_fkey" FOREIGN KEY ("inventoryId") REFERENCES "Inventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InventoryAccess" ADD CONSTRAINT "InventoryAccess_inventoryId_fkey" FOREIGN KEY ("inventoryId") REFERENCES "Inventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InventoryAccess" ADD CONSTRAINT "InventoryAccess_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "InventoryIdCounter" ADD CONSTRAINT "InventoryIdCounter_inventoryId_fkey" FOREIGN KEY ("inventoryId") REFERENCES "Inventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "InventoryTag" ADD CONSTRAINT "InventoryTag_inventoryId_fkey" FOREIGN KEY ("inventoryId") REFERENCES "Inventory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
