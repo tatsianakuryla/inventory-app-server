@@ -2,12 +2,23 @@
 
 A comprehensive REST API for managing personal collections with customizable fields, granular access control, and social authentication support.
 
+## 🌐 Live Demo
+
+**Production API:** https://site--inventory-app-server--sm9fnltkyqvh.code.run/
+
+Test the connection:
+```bash
+curl https://site--inventory-app-server--sm9fnltkyqvh.code.run/
+# Should return: {"status":"ok"}
+```
+
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
 - [Technology Stack](#-technology-stack)
 - [Key Features](#-key-features)
 - [Getting Started](#-getting-started)
+- [Deployment](#-deployment)
 - [Project Structure](#-project-structure)
 - [API Documentation](#-api-documentation)
 - [Database Schema](#-database-schema)
@@ -28,6 +39,18 @@ This backend system provides a robust foundation for building collection managem
 - Product catalogs
 - Research databases
 - Any structured collection organization
+
+### Recent Improvements
+
+✨ **Latest Features:**
+
+- **Custom ID Service** - Robust auto-generation of item IDs with configurable formats
+- **Full-Text Search** - PostgreSQL-powered search with ranking across all item fields
+- **Bulk Operations** - Delete multiple items/inventories with conflict handling
+- **Admin Write Access** - Admins can view and edit all collections
+- **Bulk Visibility Control** - Update public/private status for multiple collections
+- **Like System** - Users can like items with aggregated counts
+- **Enhanced Validation** - Zod schemas with proper type coercion and error messages
 
 ---
 
@@ -94,8 +117,10 @@ This backend system provides a robust foundation for building collection managem
   - 3x Boolean fields (checkboxes)
   - Each field configurable: name, description, visibility, table display
 - **Custom Item ID Format**
-  - Define format with literals, counters, and dates
-  - Example: `BOOK-0001-2024`
+  - Define format with literals, sequences, and date elements
+  - Configurable prefix, counter, and date patterns
+  - Auto-increment sequences with conflict retry
+  - Example formats: `BOOK-0001`, `ITEM-2024-0001`, `PRD-A-001`
 - **Search & Filtering**
   - Full-text search across name and description
   - Pagination with configurable page size
@@ -104,13 +129,17 @@ This backend system provides a robust foundation for building collection managem
 ### 📝 Item Management
 
 - **Dynamic Fields** based on collection configuration
-- **Automatic ID Generation** using custom format
+- **Automatic ID Generation** using custom format with retry logic
 - **Like System** - users can like/unlike items
+- **Full-Text Search**
+  - PostgreSQL `tsvector` for fast search
+  - Search across all text fields (text1-3, long1-3)
+  - Ranked results by relevance
+  - Supports complex queries
 - **Bulk Operations**
   - Mass deletion with version checking
-  - Conflict resolution
-- **Version Control** - prevents concurrent update conflicts
-- **Search** - across all text and numeric fields
+  - Conflict resolution and detailed reporting
+- **Version Control** - prevents concurrent update conflicts (optimistic locking)
 
 ### 🏷️ Organization
 
@@ -134,15 +163,17 @@ This backend system provides a robust foundation for building collection managem
 ### 👨‍💼 Administration
 
 - **User Management Dashboard**
-  - View all users with filtering
-  - Block/unblock users
-  - Promote/demote roles
-  - Bulk operations
-  - Protected super admins
+  - View all users with filtering and search
+  - Block/unblock users (bulk operations)
+  - Promote/demote roles (bulk operations)
+  - Delete users (bulk operations)
+  - Protected super admins (cannot be blocked/demoted/deleted)
 - **Content Management**
-  - Manage all collections
-  - Category administration
-  - Tag creation
+  - Full access to all collections (read/write)
+  - View collections with write access via `/api/inventory/my/write-access`
+  - Bulk update collection visibility
+  - Category administration (create/update/delete)
+  - Tag creation and management
 
 ---
 
@@ -220,10 +251,10 @@ npm run prisma:seed
 
 ```bash
 # Development mode with hot reload
-npm run dev
+  npm run dev
 
 # Production mode
-npm start
+  npm start
 ```
 
 The API will be available at: `http://localhost:3000`
@@ -233,6 +264,67 @@ Test the connection:
 ```bash
 curl http://localhost:3000
 # Should return: {"status":"ok"}
+```
+
+---
+
+## 🚢 Deployment
+
+### Production Environment
+
+The API is deployed at: **https://site--inventory-app-server--sm9fnltkyqvh.code.run/**
+
+### Environment Variables for Production
+
+Ensure the following environment variables are configured in your deployment platform:
+
+```env
+# Database (Production PostgreSQL)
+DATABASE_URL="postgresql://..."
+
+# JWT Configuration
+JWT_SECRET="production-secret-min-32-characters"
+JWT_EXPIRES_IN="7d"
+
+# Server Configuration
+PORT=3000
+NODE_ENV="production"
+
+# CORS - Add production client URLs
+ALLOWED_ORIGINS="https://your-client-domain.com,https://your-app.com"
+
+# OAuth Credentials (Production)
+GOOGLE_CLIENT_ID="..."
+FACEBOOK_APP_ID="..."
+FACEBOOK_APP_SECRET="..."
+
+# Super Admins
+SUPERADMINS="admin@example.com"
+```
+
+### Deployment Checklist
+
+Before deploying to production:
+
+- ✅ Set `NODE_ENV=production`
+- ✅ Use strong, unique `JWT_SECRET` (32+ characters)
+- ✅ Configure production database with connection pooling
+- ✅ Run database migrations: `npm run prisma:migrate`
+- ✅ Update `ALLOWED_ORIGINS` with actual client domains
+- ✅ Set up HTTPS (handled by deployment platform)
+- ✅ Configure OAuth credentials for production domains
+- ✅ Add super admin email addresses
+- ✅ Enable database backups
+- ✅ Set up monitoring and logging
+
+### Build and Start
+
+```bash
+# Generate Prisma Client
+npm run prisma:generate
+
+# Start production server
+npm start
 ```
 
 ---
@@ -252,10 +344,10 @@ server/
     │   ├── controllers/
     │   │   └── categories.controller.ts
     │   ├── router/
-    │   │   └── categoriesRouter.ts
+    │   │   └── categories.router.ts
     │   └── shared/
     │       └── types/
-    │           └── schemas.ts      # Zod validation schemas
+    │           └── tags.categories.discussions.inventory.items.schemas.ts      # Zod validation schemas
     │
     ├── discussions/                # Discussion/comments module
     │   ├── controllers/
@@ -292,8 +384,8 @@ server/
     │   │   ├── user/               # User operations
     │   │   └── types/
     │   ├── router/
-    │   │   ├── usersRouter.ts
-    │   │   └── adminRouter.ts
+    │   │   ├── users.router.ts
+    │   │   └── admin.router.ts
     │   ├── security/               # Password hashing
     │   └── shared/
     │       ├── constants/
@@ -333,10 +425,16 @@ server/
 
 ## 🌐 API Documentation
 
-### Base URL
+### Base URLs
 
+**Local Development:**
 ```
 http://localhost:3000/api
+```
+
+**Production:**
+```
+https://site--inventory-app-server--sm9fnltkyqvh.code.run/api
 ```
 
 ### Authentication Header
@@ -363,18 +461,22 @@ Authorization: Bearer <jwt-token>
 
 #### 📦 Collection Endpoints
 
-| Method | Endpoint                       | Description               | Auth Required    |
-| ------ | ------------------------------ | ------------------------- | ---------------- |
-| POST   | `/api/inventory`               | Create collection         | ✅               |
-| GET    | `/api/inventory`               | List collections          | ❌ (public only) |
-| GET    | `/api/inventory/:id`           | Get collection details    | ❌ (if public)   |
-| PATCH  | `/api/inventory/:id`           | Update collection         | ✅ (owner/admin) |
-| DELETE | `/api/inventory`               | Delete collections (bulk) | ✅               |
-| GET    | `/api/inventory/:id/access`    | Get access list           | ✅ (owner/admin) |
-| PUT    | `/api/inventory/:id/access`    | Update access             | ✅ (owner/admin) |
-| DELETE | `/api/inventory/:id/access`    | Revoke access             | ✅ (owner/admin) |
-| PUT    | `/api/inventory/:id/fields`    | Configure fields          | ✅ (owner/admin) |
-| PUT    | `/api/inventory/:id/id-format` | Set ID format             | ✅ (owner/admin) |
+| Method | Endpoint                       | Description                    | Auth Required    |
+| ------ | ------------------------------ | ------------------------------ | ---------------- |
+| POST   | `/api/inventory`               | Create collection              | ✅               |
+| GET    | `/api/inventory`               | List all collections           | ❌ (public only) |
+| GET    | `/api/inventory/my`            | Get my owned collections       | ✅               |
+| GET    | `/api/inventory/my/write-access` | Get collections I can edit   | ✅               |
+| GET    | `/api/inventory/:id`           | Get collection details         | ❌ (if public)   |
+| PATCH  | `/api/inventory/:id`           | Update collection              | ✅ (owner/admin) |
+| DELETE | `/api/inventory`               | Delete collections (bulk)      | ✅ (owner/admin) |
+| PATCH  | `/api/inventory/visibility`    | Update visibility (bulk)       | ✅ (owner/admin) |
+| GET    | `/api/inventory/:id/access`    | Get access list                | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/access`    | Update access                  | ✅ (owner/admin) |
+| DELETE | `/api/inventory/:id/access`    | Revoke access                  | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/fields`    | Configure fields               | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/id-format` | Set custom ID format           | ✅ (owner/admin) |
+| GET    | `/api/inventory/:id/statistics`| Get collection statistics      | ❌ (if public)   |
 
 #### 📝 Item Endpoints
 
@@ -1446,3 +1548,45 @@ npm start            # Start server
 - **Functional programming** preferred
 - **Explicit types** over `any`
 - **Zod schemas** for all external input
+
+---
+
+## 🎯 Key Technical Highlights
+
+### Performance Optimizations
+
+- **Database Indexing**
+  - Full-text search indexes on `Item.searchVector`
+  - Composite indexes on foreign keys
+  - Unique constraints for data integrity
+  
+- **Query Optimization**
+  - Select only required fields to minimize data transfer
+  - Pagination to limit result sets
+  - Efficient joins with Prisma relations
+
+- **Concurrency Control**
+  - Optimistic locking with version fields
+  - Retry logic for ID generation conflicts
+  - Transactional bulk operations
+
+### Error Handling
+
+- **Structured Error Responses**
+  - Consistent error format across all endpoints
+  - Descriptive error messages
+  - HTTP status codes follow REST conventions
+  
+- **Validation**
+  - Input validation with Zod schemas
+  - Type coercion for query parameters
+  - Custom error messages for user-friendly feedback
+
+### Scalability Considerations
+
+- **Stateless Authentication** - JWT tokens enable horizontal scaling
+- **Connection Pooling** - Prisma manages database connections efficiently
+- **Async Operations** - Non-blocking I/O throughout the application
+- **Modular Architecture** - Easy to extract microservices if needed
+
+---
