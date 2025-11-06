@@ -12,6 +12,8 @@ const CustomIdElementType = {
   SEQUENCE: "SEQUENCE",
 } as const;
 
+type SqlParam = string | number;
+
 type CustomIdElementType = (typeof CustomIdElementType)[keyof typeof CustomIdElementType];
 
 type CustomIdElement = {
@@ -220,8 +222,7 @@ export class CustomIdService {
   ): Promise<number> {
     const { regularExpressionPattern, likePrefix, likeSuffix } =
       this.buildSequenceExtractionHelpers(formatSchema);
-
-    const params: any[] = [regularExpressionPattern, inventoryId];
+    const params: SqlParam[] = [regularExpressionPattern, inventoryId];
     let paramIndex = 3;
 
     let whereClauses = `"inventoryId" = $2`;
