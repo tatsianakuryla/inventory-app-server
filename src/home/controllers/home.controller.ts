@@ -1,115 +1,87 @@
 import prisma from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
+import type {
+  HomePopularQuery,
+  HomeRecentQuery,
+  TagCloudQuery,
+} from "../shared/types/home.schemas.ts";
+import { INVENTORY_SELECTED } from "../../inventory/shared/constants/constants.ts";
+import { handleError } from "../../users/shared/helpers/helpers.ts";
 
 export class HomeController {
-  public static getLatest = async (request: Request, response: Response) => {
-    const limit = Math.min(Number(request.query.limit) || 10, 50);
-    const inventories = await prisma.inventory.findMany({
-      where: {
-        isPublic: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        imageUrl: true,
-        categoryId: true,
-        createdAt: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+  public static getPopular = async (_request: Request, response: Response) => {
+    try {
+      const query = response.locals.query as HomePopularQuery | undefined;
+      const { limit = 5 } = query ?? {};
+      const inventories = await prisma.inventory.findMany({
+        select: {
+          ...INVENTORY_SELECTED,
+          _count: {
+            select: { items: true },
           },
         },
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
+        orderBy: {
+          items: { _count: "desc" },
         },
-        _count: {
-          select: {
-            items: true,
-          },
-        },
-      },
-    });
-    return response.json(inventories);
+        take: limit,
+      });
+      const items = inventories.map(({ _count, ...inventory }) => ({
+        ...inventory,
+        itemsCount: _count.items,
+      }));
+      return response.json({ items });
+    } catch (error) {
+      return handleError(error, response);
+    }
   };
 
-  public static getPopular = async (request: Request, response: Response) => {
-    const limit = Math.min(Number(request.query.limit) || 5, 20);
-    const inventories = await prisma.inventory.findMany({
-      where: {
-        isPublic: true,
-      },
-      orderBy: {
-        items: {
-          _count: "desc",
+  public static getRecent = async (_request: Request, response: Response) => {
+    try {
+      const query = response.locals.query as HomeRecentQuery | undefined;
+      const { limit = 5 } = query ?? {};
+      const items = await prisma.inventory.findMany({
+        select: INVENTORY_SELECTED,
+        orderBy: {
+          createdAt: "desc",
         },
-      },
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        imageUrl: true,
-        categoryId: true,
-        createdAt: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: {
-            items: true,
-          },
-        },
-      },
-    });
-
-    return response.json(inventories);
+        take: limit,
+      });
+      return response.json({ items });
+    } catch (error) {
+      return handleError(error, response);
+    }
   };
 
-  public static getTagCloud = async (request: Request, response: Response) => {
-    const limit = Math.min(Number(request.query.limit) || 50, 100);
-    const tags = await prisma.tag.findMany({
-      orderBy: {
-        inventories: {
-          _count: "desc",
-        },
-      },
-      take: limit,
-      select: {
-        id: true,
-        name: true,
-        _count: {
-          select: {
-            inventories: true,
+  public static getTagCloud = async (_request: Request, response: Response) => {
+    try {
+      const query = response.locals.query as TagCloudQuery | undefined;
+      const { limit = 50 } = query ?? {};
+      const tags = await prisma.tag.findMany({
+        orderBy: {
+          inventories: {
+            _count: "desc",
           },
         },
-      },
-    });
-    const tagCloud = tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      count: tag._count.inventories,
-      weight: tag._count.inventories,
-    }));
-    return response.json(tagCloud);
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              inventories: true,
+            },
+          },
+        },
+      });
+      const tagCloud = tags.map((tag) => ({
+        id: tag.id,
+        name: tag.name,
+        count: tag._count.inventories,
+        weight: tag._count.inventories,
+      }));
+      return response.json(tagCloud);
+    } catch (error) {
+      return handleError(error, response);
+    }
   };
 }

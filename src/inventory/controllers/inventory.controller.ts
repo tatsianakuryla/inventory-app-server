@@ -21,7 +21,7 @@ import {
 } from "../../shared/typeguards/typeguards.ts";
 import { Prisma, Role, InventoryRole } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
-import type { Payload } from "../../users/shared/types/users.schemas.js";
+import type { Payload } from "../../users/shared/types/users.schemas.ts";
 import {
   isFieldKey,
   type WritableFields,

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { Validator } from "../../shared/middlewares/validator.ts";
 import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAndNotBlocked.ts";
-import { requireAdmin } from "../../shared/middlewares/requireAdmin.ts";
 import { requireCanManageInventory } from "../../inventory/shared/middlewares/requireCanManageInventory.ts";
 import { TagsController } from "../controllers/tags.controller.ts";
 import {
@@ -10,7 +9,7 @@ import {
   PopularTagsQuerySchema,
   UpdateInventoryTagsSchema,
 } from "../shared/types/tags.schemas.ts";
-import {InventoryParametersSchema} from "../../inventory/shared/types/inventory.schemas.js";
+import {InventoryParametersSchema} from "../../inventory/shared/types/inventory.schemas.ts";
 
 export const tagsRouter = Router();
 
@@ -25,7 +24,6 @@ tagsRouter.get(
 tagsRouter.post(
   "/",
   requireAuthAndNotBlocked,
-  requireAdmin,
   Validator.requestBodyValidate(TagCreateSchema),
   TagsController.create,
 );

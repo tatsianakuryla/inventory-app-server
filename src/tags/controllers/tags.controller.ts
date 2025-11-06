@@ -3,15 +3,15 @@ import prisma from "../../shared/db/db.ts";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import { isPrismaUniqueError } from "../../shared/typeguards/typeguards.ts";
 import type {
-  InventoryParameters,
   UpdateInventoryTagsRequest,
   TagsQuery,
   PopularTagsQuery,
   TagCreate,
-} from "../shared/types/schemas.ts";
+} from "../shared/types/tags.schemas.ts";
+import type {InventoryParameters} from "../../inventory/shared/types/inventory.schemas.ts";
 
 export class TagsController {
-  public static getAll = async (request: Request, response: Response) => {
+  public static getAll = async (_request: Request, response: Response) => {
     try {
       const query = response.locals.query as TagsQuery | undefined;
       const { search = "", limit = 50 } = query ?? {};
@@ -27,7 +27,7 @@ export class TagsController {
     }
   };
 
-  public static getPopular = async (request: Request, response: Response) => {
+  public static getPopular = async (_request: Request, response: Response) => {
     try {
       const query = response.locals.query as PopularTagsQuery | undefined;
       const { limit = 10 } = query ?? {};
@@ -91,18 +91,36 @@ export class TagsController {
   public static updateInventoryTags = async (request: Request, response: Response) => {
     try {
       const { inventoryId } = request.params as InventoryParameters;
-      const { tagIds } = request.body as UpdateInventoryTagsRequest;
+      const { tagNames } = request.body as UpdateInventoryTagsRequest;
+      
       await prisma.$transaction(async (tx) => {
         await tx.inventoryTag.deleteMany({
           where: { inventoryId },
         });
-        if (tagIds.length > 0) {
+        
+        if (tagNames.length > 0) {
+          const tagIds: number[] = [];
+          for (const tagName of tagNames) {
+            const trimmedName = tagName.trim();
+            let tag = await tx.tag.findFirst({
+              where: { name: { equals: trimmedName, mode: "insensitive" } },
+            });
+            if (!tag) {
+              tag = await tx.tag.create({
+                data: { name: trimmedName },
+              });
+            }
+            
+            tagIds.push(tag.id);
+          }
+
           await tx.inventoryTag.createMany({
             data: tagIds.map((tagId) => ({ inventoryId, tagId })),
             skipDuplicates: true,
           });
         }
       });
+
       const updated = await prisma.inventoryTag.findMany({
         where: { inventoryId },
         select: {

@@ -20,11 +20,11 @@ export const PopularTagsQuerySchema = z.object({
 export type PopularTagsQuery = z.infer<typeof PopularTagsQuerySchema>;
 
 export const UpdateInventoryTagsSchema = z.object({
-  tagIds: z
-    .array(z.coerce.number().int().positive())
+  tagNames: z
+    .array(z.string().trim().min(1).max(50))
     .max(20, "Maximum 20 tags per inventory")
-    .refine((array) => new Set(array).size === array.length, {
-      message: "Duplicate tag IDs are not allowed",
+    .refine((array) => new Set(array.map(tag => tag.toLowerCase())).size === array.length, {
+      message: "Duplicate tag names are not allowed",
     }),
 });
 
