@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import { usersRouter } from "./src/users/router/users.router.ts";
 import { adminRouter } from "./src/users/router/admin.router.ts";
 import type { ErrorRequestHandler } from "express";
@@ -29,12 +30,13 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Skip-Auth-Interceptor"],
   }),
 );
 
 app.use(helmet());
 app.use(express.json());
+app.use(cookieParser());
 app.use("/api/users", usersRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/inventory", inventoryRouter);

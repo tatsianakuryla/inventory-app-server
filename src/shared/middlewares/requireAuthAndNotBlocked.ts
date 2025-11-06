@@ -10,7 +10,7 @@ export async function requireAuthAndNotBlocked(
   response: Response,
   next: NextFunction,
 ) {
-  const token = TokenController.getBearer(request);
+  const token = TokenController.getTokenFromRequest(request);
   if (!token) return response.status(401).json({ message: BACKEND_ERRORS.UNAUTHENTICATED });
 
   try {

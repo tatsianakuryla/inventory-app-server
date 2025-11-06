@@ -70,7 +70,7 @@ export class UserController {
     response: Response<ResponseBody>,
   ): Promise<Response<ResponseBody>> => {
     try {
-      const newUser = await this.createNewUserFromRequest(request);
+      const newUser = await this.createNewUserFromRequest(request, response);
       return response.status(201).json(newUser);
     } catch (error: unknown) {
       if (isPrismaUniqueError(error)) {
@@ -82,6 +82,7 @@ export class UserController {
 
   private static async createNewUserFromRequest(
     request: Request<Record<string, never>, ResponseBody, RegisterRequestBody>,
+    response: Response<ResponseBody>,
   ): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
@@ -96,11 +97,11 @@ export class UserController {
       select: USER_SELECTED,
     });
     const token = TokenController.createTokenForUser(user);
+    TokenController.setAuthCookie(response, token);
     return {
       ...user,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
-      token,
     };
   }
 
@@ -127,13 +128,14 @@ export class UserController {
         return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
       await this.promoteSuperAdmins(user);
       const token = TokenController.createTokenForUser(user);
+      TokenController.setAuthCookie(response, token);
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
         ...rest,
         createdAt: createdAt.toISOString(),
         updatedAt: updatedAt.toISOString(),
       };
-      return response.status(200).json({ ...safe, token });
+      return response.status(200).json(safe);
     } catch (error) {
       return handleError(error, response);
     }
@@ -175,6 +177,7 @@ export class UserController {
   };
 
   public static logout = (_request: Request, response: Response): Response => {
+    TokenController.clearAuthCookie(response);
     return response.status(204).end();
   };
 }
