@@ -80,7 +80,8 @@ export class InventoryController {
           SELECT 
             i.id, i.name, i.description, i."imageUrl", i."isPublic", i."ownerId",
             i."categoryId", i."createdAt", i."updatedAt", i.version,
-            json_build_object('name', u.name) as owner
+            json_build_object('name', u.name) as owner,
+            (SELECT COUNT(*)::int FROM "Item" WHERE "Item"."inventoryId" = i.id) as "itemsCount"
           FROM "Inventory" i
           LEFT JOIN "User" u ON i."ownerId" = u.id
           WHERE i."searchVector" @@ to_tsquery('english', ${tsquery})
@@ -97,16 +98,26 @@ export class InventoryController {
         total = Number(count);
       } else {
         const where: Prisma.InventoryWhereInput = {};
-        [items, total] = await prisma.$transaction([
+        const [inventories, total_] = await prisma.$transaction([
           prisma.inventory.findMany({
             where,
             skip,
             take: perPage,
             orderBy: { [sortBy]: order },
-            select: INVENTORY_SELECTED,
+            select: {
+              ...INVENTORY_SELECTED,
+              _count: {
+                select: { items: true },
+              },
+            },
           }),
           prisma.inventory.count({ where }),
         ]);
+        items = inventories.map(({ _count, ...inventory }) => ({
+          ...inventory,
+          itemsCount: _count.items,
+        }));
+        total = total_;
       }
 
       const hasMore = skip + items.length < total;

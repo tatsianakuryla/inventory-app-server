@@ -39,13 +39,22 @@ export class HomeController {
     try {
       const query = response.locals.query as HomeRecentQuery | undefined;
       const { limit = 5 } = query ?? {};
-      const items = await prisma.inventory.findMany({
-        select: INVENTORY_SELECTED,
+      const inventories = await prisma.inventory.findMany({
+        select: {
+          ...INVENTORY_SELECTED,
+          _count: {
+            select: { items: true },
+          },
+        },
         orderBy: {
           createdAt: "desc",
         },
         take: limit,
       });
+      const items = inventories.map(({ _count, ...inventory }) => ({
+        ...inventory,
+        itemsCount: _count.items,
+      }));
       return response.json({ items });
     } catch (error) {
       return handleError(error, response);
