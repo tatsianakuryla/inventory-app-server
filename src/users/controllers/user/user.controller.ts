@@ -97,11 +97,11 @@ export class UserController {
       select: USER_SELECTED,
     });
     const token = TokenController.createTokenForUser(user);
-    TokenController.setAuthCookie(response, token);
     return {
       ...user,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
+      token,
     };
   }
 
@@ -128,12 +128,12 @@ export class UserController {
         return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
       await this.promoteSuperAdmins(user);
       const token = TokenController.createTokenForUser(user);
-      TokenController.setAuthCookie(response, token);
       const { password: _omit, createdAt, updatedAt, ...rest } = user;
       const safe = {
         ...rest,
         createdAt: createdAt.toISOString(),
         updatedAt: updatedAt.toISOString(),
+        token,
       };
       return response.status(200).json(safe);
     } catch (error) {
@@ -177,7 +177,6 @@ export class UserController {
   };
 
   public static logout = (_request: Request, response: Response): Response => {
-    TokenController.clearAuthCookie(response);
     return response.status(204).end();
   };
 }

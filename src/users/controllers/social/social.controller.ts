@@ -138,7 +138,6 @@ export class SocialController {
       return response.status(403).json({ message: BACKEND_ERRORS.USER_BLOCKED });
     }
     const token = TokenController.createTokenForUser(user);
-    TokenController.setAuthCookie(response, token);
-    return response.json(user);
+    return response.json({ ...user, token });
   }
 }

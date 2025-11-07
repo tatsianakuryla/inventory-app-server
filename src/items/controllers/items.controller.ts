@@ -269,10 +269,13 @@ export class ItemsController {
     try {
       const { itemId } = request.params as ItemParameters;
       const userId = request.user.sub;
-      await prisma.itemLike.create({ data: { itemId, userId } });
+      await prisma.itemLike.upsert({
+        where: { itemId_userId: { itemId, userId } },
+        create: { itemId, userId },
+        update: {},
+      });
       return response.status(204).end();
     } catch (error) {
-      if (isPrismaUniqueError(error)) return response.status(409).json({ message: "Already liked" });
       return handleError(error, response);
     }
   };
@@ -281,7 +284,7 @@ export class ItemsController {
     try {
       const { itemId } = request.params as ItemParameters;
       const userId = request.user.sub;
-      await prisma.itemLike.delete({ where: { itemId_userId: { itemId, userId } } });
+      await prisma.itemLike.deleteMany({ where: { itemId, userId } });
       return response.status(204).end();
     } catch (error) {
       return handleError(error, response);

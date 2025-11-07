@@ -50,9 +50,15 @@ export const SafeUserSchema = z.object({
 
 export type SafeUser = z.infer<typeof SafeUserSchema>;
 
+export const AuthResponseSchema = SafeUserSchema.extend({
+  token: z.string(),
+});
+
+export type AuthResponse = z.infer<typeof AuthResponseSchema>;
+
 export const ResponseBodySchema = SafeUserSchema;
 
-export type ResponseBody = SafeUser | ResponseError;
+export type ResponseBody = SafeUser | AuthResponse | ResponseError;
 
 export const UpdateUsersResponseSchema = z.object({
   updated: z.number(),

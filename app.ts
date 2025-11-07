@@ -16,17 +16,23 @@ import { discussionsRouter } from "./src/discussions/router/discussions.router.t
 import { homeRouter } from "./src/home/router/home.router.ts";
 
 dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.set("trust proxy", 1);
+
+const CLIENT_ORIGIN =
+  process.env.CLIENT_ORIGIN ??
+  "https://site--inventory-app--sm9fnltkyqvh.code.run";
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
+      if (!origin || origin === CLIENT_ORIGIN || ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
       }
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -34,7 +40,12 @@ app.use(
   }),
 );
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
+
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/users", usersRouter);
@@ -46,9 +57,9 @@ app.use("/api/tags", tagsRouter);
 app.use("/api/discussions", discussionsRouter);
 app.use("/api/home", homeRouter);
 
-app.get("/", (_request, response) => {
-  return response.json({ status: "ok" });
-});
+app.get("/api/health", (_request, response) => response.status(200).send("OK"));
+
+app.get("/", (_request, response) => response.json({ status: "ok" }));
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
@@ -56,7 +67,7 @@ app.listen(PORT, () => {
 
 const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
   if (response.headersSent) return next(error);
-  const { status = 500, message = "Server error" } = error;
+  const { status = 500, message = "Server error" } = error as any;
   console.error(error);
   return response.status(status).json({ message });
 };
