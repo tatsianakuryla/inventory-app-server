@@ -5,7 +5,7 @@ export const VERSION_CONFLICT_ERROR_CODE = "P2025";
 export const VERSION_CONFLICT_ERROR_MESSAGE = "Version conflict";
 export const AUTH_COOKIE_NAME = "auth_token" as const;
 export const ALLOWED_ORIGINS = [
-  "http://localhost:5173",
+  "https://localhost:5173",
   "https://site--inventory-app--sm9fnltkyqvh.code.run",
 ];
 

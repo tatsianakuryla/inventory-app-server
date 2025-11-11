@@ -85,7 +85,7 @@ inventoryRouter.delete<InventoryParameters>(
   InventoryController.deleteAccess,
 );
 
-inventoryRouter.put<InventoryParameters>(
+inventoryRouter.patch<InventoryParameters>(
   "/:inventoryId/fields",
   requireAuthAndNotBlocked,
   requireCanManageInventory,

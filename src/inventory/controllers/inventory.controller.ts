@@ -19,7 +19,7 @@ import {
   isPrismaUniqueError,
   isPrismaVersionConflictError,
 } from "../../shared/typeguards/typeguards.ts";
-import { Prisma, Role, InventoryRole } from "@prisma/client";
+import { Prisma, Role, InventoryRole, FieldState } from "@prisma/client";
 import { handleError } from "../../users/shared/helpers/helpers.ts";
 import type { Payload } from "../../users/shared/types/users.schemas.ts";
 import {
@@ -46,6 +46,25 @@ export class InventoryController {
         ownerId,
         InventoryIdFormat: {
           create: { schema: DEFAULT_ID_SCHEMA },
+        },
+        fields: {
+          create: {
+            text1State: FieldState.HIDDEN,
+            text2State: FieldState.HIDDEN,
+            text3State: FieldState.HIDDEN,
+            long1State: FieldState.HIDDEN,
+            long2State: FieldState.HIDDEN,
+            long3State: FieldState.HIDDEN,
+            num1State: FieldState.HIDDEN,
+            num2State: FieldState.HIDDEN,
+            num3State: FieldState.HIDDEN,
+            link1State: FieldState.HIDDEN,
+            link2State: FieldState.HIDDEN,
+            link3State: FieldState.HIDDEN,
+            bool1State: FieldState.HIDDEN,
+            bool2State: FieldState.HIDDEN,
+            bool3State: FieldState.HIDDEN,
+          },
         },
         ...(description !== undefined && { description }),
         ...(imageUrl !== undefined && { imageUrl }),
@@ -137,12 +156,25 @@ export class InventoryController {
       const finalPage = Math.max(1, page);
       const skip = (finalPage - 1) * perPage;
       
-      let allItems: InventorySelectedRow[];
+      let allItems: any[];
       if (userRole === Role.ADMIN) {
         const inventories = await prisma.inventory.findMany({
-          select: INVENTORY_SELECTED,
+          select: {
+            ...INVENTORY_SELECTED,
+            _count: {
+              select: { items: true },
+            },
+          },
         });
-        allItems = inventories.filter((inv) => inv.ownerId !== userId);
+        allItems = inventories
+          .filter((inv) => inv.ownerId !== userId)
+          .map((inv) => {
+            const { _count, ...rest } = inv;
+            return {
+              ...rest,
+              itemsCount: _count.items,
+            };
+          });
       } else {
         const inventoryAccesses = await prisma.inventoryAccess.findMany({
           where: {
@@ -151,13 +183,24 @@ export class InventoryController {
           },
           include: {
             inventory: {
-              select: INVENTORY_SELECTED,
+              select: {
+                ...INVENTORY_SELECTED,
+                _count: {
+                  select: { items: true },
+                },
+              },
             },
           },
         });
         allItems = inventoryAccesses
           .filter((access) => access.inventory.ownerId !== userId)
-          .map((access) => access.inventory);
+          .map((access) => {
+            const { _count, ...rest } = access.inventory;
+            return {
+              ...rest,
+              itemsCount: _count.items,
+            };
+          });
       }
       
       const total = allItems.length;
@@ -493,7 +536,14 @@ export class InventoryController {
     const entries = Object.entries(patch) as Array<[WritableKey, WritableFields[WritableKey]]>;
     for (const [key, value] of entries) {
       if (isFieldKey(key)) {
-        (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = value;
+        if (key.endsWith('State') && typeof value === 'string') {
+          const enumValue = FieldState[value as keyof typeof FieldState];
+          if (enumValue !== undefined) {
+            (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = enumValue as any;
+          }
+        } else {
+          (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = value;
+        }
       }
     }
     return data;
@@ -516,7 +566,7 @@ export class InventoryController {
       where: { inventoryId, version },
       data: {
         ...data,
-        version: { increment: 1 },
+        version: version + 1,
       },
     });
     if (result.count !== 1) {
