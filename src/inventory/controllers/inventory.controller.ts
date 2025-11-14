@@ -152,7 +152,7 @@ export class InventoryController {
       const userRole = request.user?.role;
       if (!userId) return response.status(401).json({ message: BACKEND_ERRORS.UNAUTHORIZED });
       const query = response.locals.query as InventoryListQuery;
-      const { page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
+      const { page = 1, perPage = 20 } = query;
       const finalPage = Math.max(1, page);
       const skip = (finalPage - 1) * perPage;
 

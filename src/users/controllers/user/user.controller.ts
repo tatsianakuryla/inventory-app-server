@@ -2,7 +2,6 @@ import type { Request, Response } from "express";
 import prisma from "../../../shared/db/db.ts";
 import {
   type AutocompleteQuery,
-  EmailSchema,
   type LoginRequestBody,
   type RegisterRequestBody,
   type ResponseBody,
@@ -82,7 +81,7 @@ export class UserController {
 
   private static async createNewUserFromRequest(
     request: Request<Record<string, never>, ResponseBody, RegisterRequestBody>,
-    response: Response<ResponseBody>,
+    _response: Response<ResponseBody>,
   ): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
