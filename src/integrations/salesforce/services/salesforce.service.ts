@@ -7,7 +7,6 @@ import type {
   SalesforceResponse,
   SalesforceTokenResponse,
 } from "../shared/salesforce.schemas.js";
-import type { ResponseError } from "../../../shared/types/types.js";
 
 const salesforceConsumerKey = process.env.SALESFORCE_CONSUMER_KEY;
 const salesforceConsumerSecret = process.env.SALESFORCE_CONSUMER_SECRET;

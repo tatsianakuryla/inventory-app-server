@@ -18,7 +18,7 @@ export class SalesforceController {
     try {
       const { account, contact } = request.body;
       const result = await SalesforceService.createAccountWithContact(account, contact);
-      return response.json({ accountId: result.accountId, contactId: result.contactId });
+      return response.json(result);
     } catch (error) {
       return handleError(error, response);
     }
