@@ -13,6 +13,7 @@ export const USER_SELECTED = {
   version: true,
   googleId: true,
   facebookId: true,
+  salesforceIntegration: true,
 } as const;
 
 export const SUPERADMINS = getAdminEmails();

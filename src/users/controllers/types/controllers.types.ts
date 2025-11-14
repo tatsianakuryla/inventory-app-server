@@ -35,6 +35,14 @@ export const IdsBodySchema = DeleteUsersBodySchema;
 
 export type UpdateUserProfile = z.infer<typeof UpdateUserSchema>;
 
+export const SalesforceIntegrationSchema = z
+  .object({
+    userId: z.string(),
+    accountId: z.string(),
+  })
+  .nullable()
+  .optional();
+
 export const SafeUserSchema = z.object({
   id: z.string(),
   email: z.string().email(),
@@ -46,6 +54,9 @@ export const SafeUserSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   version: z.number(),
+  googleId: z.string().nullable().optional(),
+  facebookId: z.string().nullable().optional(),
+  salesforceIntegration: SalesforceIntegrationSchema,
 });
 
 export type SafeUser = z.infer<typeof SafeUserSchema>;
@@ -55,8 +66,6 @@ export const AuthResponseSchema = SafeUserSchema.extend({
 });
 
 export type AuthResponse = z.infer<typeof AuthResponseSchema>;
-
-export const ResponseBodySchema = SafeUserSchema;
 
 export type ResponseBody = SafeUser | AuthResponse | ResponseError;
 
@@ -92,6 +101,8 @@ export type UserBasic = Prisma.UserGetPayload<{
   select: { id: true; email: true; role: true; status: true };
 }>;
 
+export type SalesforceIntegration = z.infer<typeof SalesforceIntegrationSchema>;
+
 export type UserListItem = {
   id: string;
   name: string;
@@ -103,6 +114,7 @@ export type UserListItem = {
   version: number;
   googleId: string | null;
   facebookId: string | null;
+  salesforceIntegration: SalesforceIntegration;
   createdAt: string;
   updatedAt: string;
 };

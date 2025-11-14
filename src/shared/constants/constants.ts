@@ -2,8 +2,8 @@ export const HASH_WORK_FACTOR = 12 as const;
 export const UNIQUE_VALUE_ERROR_CODE = "P2002";
 export const FOREIGN_KEY_ERROR_CODE = "P2003";
 export const VERSION_CONFLICT_ERROR_CODE = "P2025";
+export const SALESFORCE_DUPLICATION = "DUPLICATES_DETECTED";
 export const VERSION_CONFLICT_ERROR_MESSAGE = "Version conflict";
-export const AUTH_COOKIE_NAME = "auth_token" as const;
 export const ALLOWED_ORIGINS = ["https://localhost:5173", "http://localhost:5173"];
 
 export const BACKEND_ERRORS = {

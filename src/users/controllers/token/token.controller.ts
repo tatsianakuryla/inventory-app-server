@@ -38,5 +38,4 @@ export class TokenController {
   public static createTokenForUser(user: UserForToken) {
     return this.signAccessToken({ sub: user.id, role: user.role });
   }
-
 }

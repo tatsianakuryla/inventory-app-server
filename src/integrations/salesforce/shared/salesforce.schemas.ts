@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { EmailSchema } from "../../../users/shared/types/users.schemas.js";
-import { OptionalUrlSchema } from "../../../shared/types/types.js";
+import { OptionalUrlSchema, IdSchema } from "../../../shared/types/types.js";
 
 export const SalesforceTokenResponseSchema = z.object({
   access_token: z.string().min(1),
   signature: z.string().min(1),
   scope: z.literal("id api"),
-  instance_url: z.url("Invalid URL"),
-  id: z.url("Invalid URL"),
+  instance_url: z.string().url("Invalid URL"),
+  id: z.string().url("Invalid URL"),
   token_type: z.literal("Bearer"),
   issued_at: z.string().regex(/^\d+$/, "issued_at must be a unix timestamp in milliseconds"),
 });
@@ -52,6 +52,7 @@ export type SalesforceResponse = z.infer<typeof SalesforceResponseSchema>;
 export const SalesforceAccountWithContactRequestSchema = z.object({
   account: SalesforceAccountCreateRequestSchema,
   contact: SalesforceContactCreateRequestSchema.omit({ AccountId: true }),
+  userId: z.union([z.string().trim().pipe(z.cuid()), z.undefined()]).optional(),
 });
 
 export type SalesforceAccountWithContactRequest = z.infer<

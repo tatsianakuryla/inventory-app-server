@@ -34,30 +34,39 @@ enum InventoryRole {
 }
 
 model User {
-  id              String            @id @default(cuid())
-  name            String
-  email           String            @unique
-  password        String?
-  imageUrl        String?
-  role            Role              @default(USER)
-  status          Status            @default(ACTIVE)
-  language        Language          @default(EN)
-  theme           Theme             @default(LIGHT)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  version         Int               @default(1)
-  googleId        String?           @unique
-  facebookId      String?           @unique
-  Inventory       Inventory[]
-  InventoryAccess InventoryAccess[]
-  Item            Item[]
-  ItemLike        ItemLike[]
-  DiscussionPost  DiscussionPost[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  email                 String                 @unique
+  password              String?
+  imageUrl              String?
+  role                  Role                   @default(USER)
+  status                Status                 @default(ACTIVE)
+  language              Language               @default(EN)
+  theme                 Theme                  @default(LIGHT)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  version               Int                    @default(1)
+  googleId              String?                @unique
+  facebookId            String?                @unique
+  Inventory             Inventory[]
+  InventoryAccess       InventoryAccess[]
+  Item                  Item[]
+  ItemLike              ItemLike[]
+  DiscussionPost        DiscussionPost[]
+  salesforceIntegration SalesforceIntegration?
 
   @@index([id, version])
   @@index([name])
   @@index([role])
   @@index([status])
+}
+
+model SalesforceIntegration {
+  userId    String @id
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId String
+
+  @@index([accountId])
 }
 
 model Inventory {
