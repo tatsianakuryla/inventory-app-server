@@ -2,6 +2,7 @@ import axios from "axios";
 import { SalesforceTokenCache } from "./salesforce.cache.js";
 import type {
   SalesforceAccountCreateRequest,
+  SalesforceAccountWithContactResponse,
   SalesforceContactCreateRequest,
   SalesforceResponse,
   SalesforceTokenResponse,
@@ -21,7 +22,7 @@ export class SalesforceService {
   public static async createAccountWithContact(
     accountBody: SalesforceAccountCreateRequest,
     contactBodyWithoutAccount: Omit<SalesforceContactCreateRequest, "AccountId">,
-  ): Promise<{ accountId: string; contactId: string } | ResponseError> {
+  ): Promise<SalesforceAccountWithContactResponse> {
     if (!salesforceInstanceUrl) {
       return this.handleSalesforceError("SALESFORCE_INSTANCE_URL is not configured");
     }
@@ -107,7 +108,7 @@ export class SalesforceService {
     return response.data;
   }
 
-  private static handleSalesforceError(message: string): ResponseError {
-    return { message };
+  private static handleSalesforceError(message: string): never {
+    throw new Error(message);
   }
 }

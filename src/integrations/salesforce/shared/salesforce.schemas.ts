@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { EmailSchema } from "../../../users/shared/types/users.schemas.js";
+import { OptionalUrlSchema } from "../../../shared/types/types.js";
 
 export const SalesforceTokenResponseSchema = z.object({
   access_token: z.string().min(1),
@@ -14,7 +16,7 @@ export type SalesforceTokenResponse = z.infer<typeof SalesforceTokenResponseSche
 
 export const SalesforceAccountCreateRequestSchema = z.object({
   Name: z.string().min(1, "Name is required").max(255, "Max Name length is 255 characters"),
-  Website: z.string().url("Website must be a valid URL").optional(),
+  Website: OptionalUrlSchema,
 });
 
 export type SalesforceAccountCreateRequest = z.infer<typeof SalesforceAccountCreateRequestSchema>;
@@ -28,7 +30,7 @@ export const SalesforceContactCreateRequestSchema = z.object({
     .string()
     .min(1, "LastName is Required")
     .max(80, "Max length for The LastName is 80 characters"),
-  Email: z.email(),
+  Email: EmailSchema,
   AccountId: z.string().min(1),
 });
 
@@ -46,3 +48,21 @@ export const SalesforceResponseSchema = z.object({
 });
 
 export type SalesforceResponse = z.infer<typeof SalesforceResponseSchema>;
+
+export const SalesforceAccountWithContactRequestSchema = z.object({
+  account: SalesforceAccountCreateRequestSchema,
+  contact: SalesforceContactCreateRequestSchema.omit({ AccountId: true }),
+});
+
+export type SalesforceAccountWithContactRequest = z.infer<
+  typeof SalesforceAccountWithContactRequestSchema
+>;
+
+export const SalesforceAccountWithContactResponseSchema = z.object({
+  accountId: z.string().min(1),
+  contactId: z.string().min(1),
+});
+
+export type SalesforceAccountWithContactResponse = z.infer<
+  typeof SalesforceAccountWithContactResponseSchema
+>;
