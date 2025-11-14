@@ -14,6 +14,7 @@ import { categoriesRouter } from "./src/categories/router/categories.router.ts";
 import { tagsRouter } from "./src/tags/router/tags.router.ts";
 import { discussionsRouter } from "./src/discussions/router/discussions.router.ts";
 import { homeRouter } from "./src/home/router/home.router.ts";
+import { salesforceRouter } from "./src/integrations/salesforce/router/salesforse.router.ts";
 
 dotenv.config();
 
@@ -23,8 +24,7 @@ const PORT = process.env.PORT || 3000;
 app.set("trust proxy", 1);
 
 const CLIENT_ORIGIN =
-  process.env.CLIENT_ORIGIN ??
-  "https://site--inventory-app--sm9fnltkyqvh.code.run";
+  process.env.CLIENT_ORIGIN ?? "https://site--inventory-app--sm9fnltkyqvh.code.run";
 
 app.use(
   cors({
@@ -56,6 +56,7 @@ app.use("/api/categories", categoriesRouter);
 app.use("/api/tags", tagsRouter);
 app.use("/api/discussions", discussionsRouter);
 app.use("/api/home", homeRouter);
+app.use("/api/salesforce", salesforceRouter);
 
 app.get("/api/health", (_request, response) => response.status(200).send("OK"));
 
