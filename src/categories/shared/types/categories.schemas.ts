@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  PaginationQuerySchema,
-  SortOrderSchema,
-} from "../../../shared/types/types.ts";
+import { PaginationQuerySchema, SortOrderSchema } from "../../../shared/types/types.ts";
 
 export const CategoryParametersSchema = z.object({
   categoryId: z.coerce.number().int().positive(),

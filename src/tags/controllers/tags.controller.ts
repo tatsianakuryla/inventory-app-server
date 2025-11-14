@@ -8,7 +8,7 @@ import type {
   PopularTagsQuery,
   TagCreate,
 } from "../shared/types/tags.schemas.ts";
-import type {InventoryParameters} from "../../inventory/shared/types/inventory.schemas.ts";
+import type { InventoryParameters } from "../../inventory/shared/types/inventory.schemas.ts";
 
 export class TagsController {
   public static getAll = async (_request: Request, response: Response) => {
@@ -92,12 +92,12 @@ export class TagsController {
     try {
       const { inventoryId } = request.params as InventoryParameters;
       const { tagNames } = request.body as UpdateInventoryTagsRequest;
-      
+
       await prisma.$transaction(async (tx) => {
         await tx.inventoryTag.deleteMany({
           where: { inventoryId },
         });
-        
+
         if (tagNames.length > 0) {
           const tagIds: number[] = [];
           for (const tagName of tagNames) {
@@ -110,7 +110,7 @@ export class TagsController {
                 data: { name: trimmedName },
               });
             }
-            
+
             tagIds.push(tag.id);
           }
 

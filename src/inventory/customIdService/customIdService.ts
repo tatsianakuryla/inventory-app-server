@@ -14,10 +14,15 @@ const CustomIdElementType = {
 
 type SqlParam = string | number;
 
-type CustomIdElementType = (typeof CustomIdElementType)[keyof typeof CustomIdElementType];
+type CustomIdElement = (typeof CustomIdElementType)[keyof typeof CustomIdElementType];
 
-type CustomIdElement = {
-  type: CustomIdElementType;
+type CustomIdFormatSchema = {
+  maxLength?: number;
+  elements: CustomIdPart[];
+};
+
+type CustomIdPart = {
+  type: CustomIdElement;
   value?: string;
   format?: string;
   leadingZeros?: boolean;
@@ -25,46 +30,49 @@ type CustomIdElement = {
   sequenceName?: string;
 };
 
-type CustomIdFormatSchema = {
-  maxLength?: number;
-  elements: CustomIdElement[];
-};
-
 export class CustomIdService {
   public static async generate(
     transactionClient: PrismaTransaction,
-    inventoryId: string
+    inventoryId: string,
   ): Promise<string> {
-    const formatSchema: CustomIdFormatSchema = await this.readFormatSchema(transactionClient, inventoryId);
+    const formatSchema: CustomIdFormatSchema = await this.readFormatSchema(
+      transactionClient,
+      inventoryId,
+    );
     this.assertExactlyOneSequence(formatSchema);
     const generationMoment: Date = new Date();
-    const maximumExistingSequenceValue: number =
-      await this.readMaximumExistingSequence(transactionClient, inventoryId, formatSchema);
+    const maximumExistingSequenceValue: number = await this.readMaximumExistingSequence(
+      transactionClient,
+      inventoryId,
+      formatSchema,
+    );
 
     const sequenceScopeKey: string =
-      (this.findSequenceElement(formatSchema)?.sequenceName) || "default";
+      this.findSequenceElement(formatSchema)?.sequenceName || "default";
 
     await this.ensureCounterRowExists(transactionClient, inventoryId, sequenceScopeKey);
     await transactionClient.$executeRawUnsafe(
       `UPDATE "InventoryIdCounter"
        SET value = GREATEST(value, $1)
        WHERE "inventoryId" = $2 AND "scopeKey" = $3`,
-      maximumExistingSequenceValue, inventoryId, sequenceScopeKey
+      maximumExistingSequenceValue,
+      inventoryId,
+      sequenceScopeKey,
     );
     const updatedCounterRows = await transactionClient.$queryRawUnsafe<{ value: number }[]>(
       `UPDATE "InventoryIdCounter"
        SET value = value + 1
        WHERE "inventoryId" = $1 AND "scopeKey" = $2
        RETURNING value`,
-      inventoryId, sequenceScopeKey
+      inventoryId,
+      sequenceScopeKey,
     );
     const nextSequenceValue: number = Number(updatedCounterRows[0]!.value);
 
-    const generatedId: string = this.buildCustomIdString(
-      formatSchema,
-      generationMoment,
-      { sequenceValue: nextSequenceValue, isPreview: false }
-    );
+    const generatedId: string = this.buildCustomIdString(formatSchema, generationMoment, {
+      sequenceValue: nextSequenceValue,
+      isPreview: false,
+    });
 
     if (formatSchema.maxLength && generatedId.length > formatSchema.maxLength) {
       throw new Error(`Generated ID exceeds maxLength (${formatSchema.maxLength})`);
@@ -74,14 +82,17 @@ export class CustomIdService {
 
   public static async preview(
     transactionClient: PrismaTransaction,
-    inventoryId: string
+    inventoryId: string,
   ): Promise<string> {
-    const formatSchema: CustomIdFormatSchema = await this.readFormatSchema(transactionClient, inventoryId);
+    const formatSchema: CustomIdFormatSchema = await this.readFormatSchema(
+      transactionClient,
+      inventoryId,
+    );
     this.assertExactlyOneSequence(formatSchema);
 
     const generationMoment: Date = new Date();
     const sequenceScopeKey: string =
-      (this.findSequenceElement(formatSchema)?.sequenceName) || "default";
+      this.findSequenceElement(formatSchema)?.sequenceName || "default";
 
     const [maximumExistingSequenceValue, counterRow] = await Promise.all([
       this.readMaximumExistingSequence(transactionClient, inventoryId, formatSchema),
@@ -92,13 +103,15 @@ export class CustomIdService {
     ]);
 
     const currentCounterValue: number = Number(counterRow?.value ?? 0);
-    const peekSequenceValue: number = Math.max(currentCounterValue + 1, maximumExistingSequenceValue + 1);
-
-    const previewId: string = this.buildCustomIdString(
-      formatSchema,
-      generationMoment,
-      { sequenceValue: peekSequenceValue, isPreview: true }
+    const peekSequenceValue: number = Math.max(
+      currentCounterValue + 1,
+      maximumExistingSequenceValue + 1,
     );
+
+    const previewId: string = this.buildCustomIdString(formatSchema, generationMoment, {
+      sequenceValue: peekSequenceValue,
+      isPreview: true,
+    });
 
     if (formatSchema.maxLength && previewId.length > formatSchema.maxLength) {
       return previewId.slice(0, formatSchema.maxLength);
@@ -108,7 +121,7 @@ export class CustomIdService {
 
   private static async readFormatSchema(
     transactionClient: PrismaTransaction,
-    inventoryId: string
+    inventoryId: string,
   ): Promise<CustomIdFormatSchema> {
     const formatRow = await transactionClient.inventoryIdFormat.findUnique({
       where: { inventoryId },
@@ -121,21 +134,22 @@ export class CustomIdService {
   }
 
   private static assertExactlyOneSequence(formatSchema: CustomIdFormatSchema): void {
-    const sequenceElementsCount: number =
-      formatSchema.elements.filter((element) => element.type === CustomIdElementType.SEQUENCE).length;
+    const sequenceElementsCount: number = formatSchema.elements.filter(
+      (element) => element.type === CustomIdElementType.SEQUENCE,
+    ).length;
     if (sequenceElementsCount !== 1) {
       throw new Error("Custom ID format must contain exactly one SEQUENCE element");
     }
   }
 
-  private static findSequenceElement(formatSchema: CustomIdFormatSchema): CustomIdElement {
+  private static findSequenceElement(formatSchema: CustomIdFormatSchema): CustomIdPart {
     return formatSchema.elements.find((element) => element.type === CustomIdElementType.SEQUENCE)!;
   }
 
   private static async ensureCounterRowExists(
     transactionClient: PrismaTransaction,
     inventoryId: string,
-    sequenceScopeKey: string
+    sequenceScopeKey: string,
   ): Promise<void> {
     await transactionClient.inventoryIdCounter.upsert({
       where: { inventoryId_scopeKey: { inventoryId, scopeKey: sequenceScopeKey } },
@@ -147,12 +161,12 @@ export class CustomIdService {
   private static buildCustomIdString(
     formatSchema: CustomIdFormatSchema,
     generationMoment: Date,
-    options: { sequenceValue: number; isPreview: boolean }
+    options: { sequenceValue: number; isPreview: boolean },
   ): string {
     const idParts: string[] = [];
 
     for (let elementIndex = 0; elementIndex < formatSchema.elements.length; elementIndex++) {
-      const element: CustomIdElement = formatSchema.elements[elementIndex]!;
+      const element: CustomIdPart = formatSchema.elements[elementIndex]!;
       let elementStringValue = "";
 
       switch (element.type) {
@@ -218,7 +232,7 @@ export class CustomIdService {
   private static async readMaximumExistingSequence(
     transactionClient: PrismaTransaction,
     inventoryId: string,
-    formatSchema: CustomIdFormatSchema
+    formatSchema: CustomIdFormatSchema,
   ): Promise<number> {
     const { regularExpressionPattern, likePrefix, likeSuffix } =
       this.buildSequenceExtractionHelpers(formatSchema);
@@ -247,7 +261,7 @@ export class CustomIdService {
                    WHERE ${whereClauses}
                ) subquery
       `,
-      ...params
+      ...params,
     );
 
     const maximumSequenceValue: number = Number(queryResultRows?.[0]?.maxseq ?? 0);
@@ -296,10 +310,10 @@ export class CustomIdService {
         else likeSuffix += element.separator;
       } else {
         if (!sequenceEncountered && element.type === CustomIdElementType.FIXED_TEXT) {
-          likePrefix += (element.value || "");
+          likePrefix += element.value || "";
         }
         if (sequenceEncountered && element.type === CustomIdElementType.FIXED_TEXT) {
-          likeSuffix += (element.value || "");
+          likeSuffix += element.value || "";
         }
       }
     }
@@ -317,16 +331,26 @@ export class CustomIdService {
     const seconds = String(dateValue.getUTCSeconds()).padStart(2, "0");
 
     switch (dateFormat) {
-      case "ISO": return dateValue.toISOString();
-      case "timestamp": return String(dateValue.getTime());
-      case "YYYY": return year;
-      case "YYYY-MM": return `${year}-${month}`;
-      case "YYYYMM": return `${year}${month}`;
-      case "YYYY-MM-DD": return `${year}-${month}-${day}`;
-      case "YYYYMMDD": return `${year}${month}${day}`;
-      case "HH:MM:SS": return `${hours}:${minutes}:${seconds}`;
-      case "HHMMSS": return `${hours}${minutes}${seconds}`;
-      default: return `${year}${month}${day}`;
+      case "ISO":
+        return dateValue.toISOString();
+      case "timestamp":
+        return String(dateValue.getTime());
+      case "YYYY":
+        return year;
+      case "YYYY-MM":
+        return `${year}-${month}`;
+      case "YYYYMM":
+        return `${year}${month}`;
+      case "YYYY-MM-DD":
+        return `${year}-${month}-${day}`;
+      case "YYYYMMDD":
+        return `${year}${month}${day}`;
+      case "HH:MM:SS":
+        return `${hours}:${minutes}:${seconds}`;
+      case "HHMMSS":
+        return `${hours}${minutes}${seconds}`;
+      default:
+        return `${year}${month}${day}`;
     }
   }
 }

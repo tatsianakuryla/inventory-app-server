@@ -5,7 +5,9 @@ import {
   VersionSchema,
   PaginationQuerySchema,
   SortOrderSchema,
-} from "../../../shared/types/types.ts";
+} from "../../../shared/types/types.js";
+import { VALIDATION_LIMITS, BATCH_LIMITS } from "../../../shared/constants/validation.js";
+import { VALIDATION_MESSAGES } from "../../../shared/constants/messages.js";
 import { Prisma, PrismaClient } from "@prisma/client";
 
 export const ItemParametersSchema = z.object({
@@ -42,14 +44,24 @@ const baseFields = z.object({
 });
 
 export const ItemCreateSchema = baseFields.extend({
-  customId: z.string().trim().min(1, "Custom ID is required").max(96).optional(),
+  customId: z
+    .string()
+    .trim()
+    .min(VALIDATION_LIMITS.NAME_MIN, VALIDATION_MESSAGES.CUSTOM_ID_REQUIRED)
+    .max(VALIDATION_LIMITS.CUSTOM_ID_MAX)
+    .optional(),
 });
 
 export type ItemCreateRequest = z.infer<typeof ItemCreateSchema>;
 
 export const ItemUpdateSchema = baseFields.extend({
   version: VersionSchema,
-  customId: z.string().trim().min(1, "Custom ID is required").max(96).optional(),
+  customId: z
+    .string()
+    .trim()
+    .min(VALIDATION_LIMITS.NAME_MIN, VALIDATION_MESSAGES.CUSTOM_ID_REQUIRED)
+    .max(VALIDATION_LIMITS.CUSTOM_ID_MAX)
+    .optional(),
 });
 
 export type ItemUpdateRequest = z.infer<typeof ItemUpdateSchema>;
@@ -57,8 +69,8 @@ export type ItemUpdateRequest = z.infer<typeof ItemUpdateSchema>;
 export const DeleteItemsBodySchema = z.object({
   items: z
     .array(z.object({ id: IdSchema, version: VersionSchema }))
-    .min(1)
-    .max(200),
+    .min(VALIDATION_LIMITS.NAME_MIN)
+    .max(BATCH_LIMITS.ITEMS_MAX),
 });
 
 export type DeleteItemsBody = z.infer<typeof DeleteItemsBodySchema>;

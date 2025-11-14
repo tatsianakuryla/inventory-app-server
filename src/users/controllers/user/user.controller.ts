@@ -18,7 +18,7 @@ import {
   isPrismaUniqueError,
   isPrismaVersionConflictError,
 } from "../../../shared/typeguards/typeguards.ts";
-import {BACKEND_ERRORS} from "../../../shared/constants/constants.ts";
+import { BACKEND_ERRORS } from "../../../shared/constants/constants.ts";
 
 export class UserController {
   public static getMe = async (
@@ -86,11 +86,11 @@ export class UserController {
   ): Promise<ResponseBody> {
     const { name, email, password } = request.body;
     const passwordHash = await Hash.get(password);
-    const role: Role = SUPERADMINS.has(EmailSchema.parse(email)) ? Role.ADMIN : Role.USER;
+    const role: Role = SUPERADMINS.has(email) ? Role.ADMIN : Role.USER;
     const user = await prisma.user.create({
       data: {
         name,
-        email: EmailSchema.parse(email),
+        email,
         password: passwordHash,
         role,
       },
@@ -112,9 +112,10 @@ export class UserController {
     try {
       const { email, password } = request.body;
       const user = await prisma.user.findUnique({
-        where: { email: EmailSchema.parse(email) },
+        where: { email },
       });
-      if (!user) return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
+      if (!user)
+        return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
       if (user.status === Status.BLOCKED) {
         return response.status(403).json({ message: BACKEND_ERRORS.USER_BLOCKED });
       }
@@ -168,9 +169,7 @@ export class UserController {
       });
     } catch (error) {
       if (isPrismaVersionConflictError(error)) {
-        return response
-          .status(409)
-          .json({ message: BACKEND_ERRORS.VERSION_CONFLICT });
+        return response.status(409).json({ message: BACKEND_ERRORS.VERSION_CONFLICT });
       }
       return handleError(error, response);
     }

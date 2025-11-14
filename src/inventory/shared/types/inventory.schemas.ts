@@ -69,7 +69,7 @@ export const InventoryAccessEntrySchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .pipe(z.enum(['OWNER', 'VIEWER', 'EDITOR'] as const)),
+    .pipe(z.enum(["OWNER", "VIEWER", "EDITOR"] as const)),
 });
 
 export type InventoryAccessEntry = z.infer<typeof InventoryAccessEntrySchema>;

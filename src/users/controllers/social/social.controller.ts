@@ -14,7 +14,7 @@ import { USER_SELECTED } from "../../shared/constants/constants.ts";
 import { Hash } from "../../security/Hash.ts";
 import { SUPERADMINS } from "../../shared/constants/constants.ts";
 import { fbDebugUrl, fbProfileUrl } from "./social.constants.ts";
-import {BACKEND_ERRORS} from "../../../shared/constants/constants.ts";
+import { BACKEND_ERRORS } from "../../../shared/constants/constants.ts";
 
 export class SocialController {
   public static googleLogin = async (

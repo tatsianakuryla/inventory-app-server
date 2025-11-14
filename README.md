@@ -7,6 +7,7 @@ A comprehensive REST API for managing personal collections with customizable fie
 **Production API:** https://site--inventory-app-server--sm9fnltkyqvh.code.run/
 
 Test the connection:
+
 ```bash
 curl https://site--inventory-app-server--sm9fnltkyqvh.code.run/
 # Should return: {"status":"ok"}
@@ -428,11 +429,13 @@ server/
 ### Base URLs
 
 **Local Development:**
+
 ```
 http://localhost:3000/api
 ```
 
 **Production:**
+
 ```
 https://site--inventory-app-server--sm9fnltkyqvh.code.run/api
 ```
@@ -461,22 +464,22 @@ Authorization: Bearer <jwt-token>
 
 #### 📦 Collection Endpoints
 
-| Method | Endpoint                       | Description                    | Auth Required    |
-| ------ | ------------------------------ | ------------------------------ | ---------------- |
-| POST   | `/api/inventory`               | Create collection              | ✅               |
-| GET    | `/api/inventory`               | List all collections           | ❌ (public only) |
-| GET    | `/api/inventory/my`            | Get my owned collections       | ✅               |
-| GET    | `/api/inventory/my/write-access` | Get collections I can edit   | ✅               |
-| GET    | `/api/inventory/:id`           | Get collection details         | ❌ (if public)   |
-| PATCH  | `/api/inventory/:id`           | Update collection              | ✅ (owner/admin) |
-| DELETE | `/api/inventory`               | Delete collections (bulk)      | ✅ (owner/admin) |
-| PATCH  | `/api/inventory/visibility`    | Update visibility (bulk)       | ✅ (owner/admin) |
-| GET    | `/api/inventory/:id/access`    | Get access list                | ✅ (owner/admin) |
-| PUT    | `/api/inventory/:id/access`    | Update access                  | ✅ (owner/admin) |
-| DELETE | `/api/inventory/:id/access`    | Revoke access                  | ✅ (owner/admin) |
-| PUT    | `/api/inventory/:id/fields`    | Configure fields               | ✅ (owner/admin) |
-| PUT    | `/api/inventory/:id/id-format` | Set custom ID format           | ✅ (owner/admin) |
-| GET    | `/api/inventory/:id/statistics`| Get collection statistics      | ❌ (if public)   |
+| Method | Endpoint                         | Description                | Auth Required    |
+| ------ | -------------------------------- | -------------------------- | ---------------- |
+| POST   | `/api/inventory`                 | Create collection          | ✅               |
+| GET    | `/api/inventory`                 | List all collections       | ❌ (public only) |
+| GET    | `/api/inventory/my`              | Get my owned collections   | ✅               |
+| GET    | `/api/inventory/my/write-access` | Get collections I can edit | ✅               |
+| GET    | `/api/inventory/:id`             | Get collection details     | ❌ (if public)   |
+| PATCH  | `/api/inventory/:id`             | Update collection          | ✅ (owner/admin) |
+| DELETE | `/api/inventory`                 | Delete collections (bulk)  | ✅ (owner/admin) |
+| PATCH  | `/api/inventory/visibility`      | Update visibility (bulk)   | ✅ (owner/admin) |
+| GET    | `/api/inventory/:id/access`      | Get access list            | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/access`      | Update access              | ✅ (owner/admin) |
+| DELETE | `/api/inventory/:id/access`      | Revoke access              | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/fields`      | Configure fields           | ✅ (owner/admin) |
+| PUT    | `/api/inventory/:id/id-format`   | Set custom ID format       | ✅ (owner/admin) |
+| GET    | `/api/inventory/:id/statistics`  | Get collection statistics  | ❌ (if public)   |
 
 #### 📝 Item Endpoints
 
@@ -1559,7 +1562,6 @@ npm start            # Start server
   - Full-text search indexes on `Item.searchVector`
   - Composite indexes on foreign keys
   - Unique constraints for data integrity
-  
 - **Query Optimization**
   - Select only required fields to minimize data transfer
   - Pagination to limit result sets
@@ -1576,7 +1578,6 @@ npm start            # Start server
   - Consistent error format across all endpoints
   - Descriptive error messages
   - HTTP status codes follow REST conventions
-  
 - **Validation**
   - Input validation with Zod schemas
   - Type coercion for query parameters

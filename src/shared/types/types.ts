@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PAGINATION } from "../constants/validation.ts";
 
 export interface ResponseError {
   message: string;
@@ -14,11 +15,16 @@ export const OptionalUrlSchema = z
   })
   .nullable();
 
-export const VersionSchema = z.coerce.number().int().min(1);
+export const VersionSchema = z.coerce.number().int().min(PAGINATION.MIN_PAGE);
 
 export const PaginationQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  perPage: z.coerce.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().min(PAGINATION.MIN_PAGE).default(PAGINATION.MIN_PAGE),
+  perPage: z.coerce
+    .number()
+    .int()
+    .min(PAGINATION.MIN_PER_PAGE)
+    .max(PAGINATION.MAX_PER_PAGE)
+    .default(PAGINATION.DEFAULT_PER_PAGE),
 });
 
 export const SortOrderSchema = z.enum(["asc", "desc"]);

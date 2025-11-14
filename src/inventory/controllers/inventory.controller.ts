@@ -1,6 +1,6 @@
 import prisma, { DEFAULT_ID_SCHEMA } from "../../shared/db/db.ts";
 import type { Request, Response } from "express";
-import {INVENTORY_SELECTED, type InventorySelectedRow} from "../shared/constants/constants.ts";
+import { INVENTORY_SELECTED, type InventorySelectedRow } from "../shared/constants/constants.ts";
 import type {
   InventoryCreateRequest,
   InventoryParameters,
@@ -155,7 +155,7 @@ export class InventoryController {
       const { page = 1, perPage = 20, sortBy = "createdAt", order = "desc" } = query;
       const finalPage = Math.max(1, page);
       const skip = (finalPage - 1) * perPage;
-      
+
       let allItems: any[];
       if (userRole === Role.ADMIN) {
         const inventories = await prisma.inventory.findMany({
@@ -202,7 +202,7 @@ export class InventoryController {
             };
           });
       }
-      
+
       const total = allItems.length;
       const items = allItems.slice(skip, skip + perPage);
       const hasMore = skip + items.length < total;
@@ -223,7 +223,8 @@ export class InventoryController {
         InventoryIdFormat: true,
       },
     });
-    if (!inventory) return response.status(404).json({ message: BACKEND_ERRORS.RESOURCE_NOT_FOUND });
+    if (!inventory)
+      return response.status(404).json({ message: BACKEND_ERRORS.RESOURCE_NOT_FOUND });
     return response.json(inventory);
   };
 
@@ -281,7 +282,11 @@ export class InventoryController {
   };
 
   public static bulkUpdateVisibility = async (
-    request: Request<Record<string, never>, Record<string, never>, import("../shared/types/inventory.schemas.ts").BulkUpdateVisibilityBody>,
+    request: Request<
+      Record<string, never>,
+      Record<string, never>,
+      import("../shared/types/inventory.schemas.ts").BulkUpdateVisibilityBody
+    >,
     response: Response,
   ) => {
     try {
@@ -292,9 +297,7 @@ export class InventoryController {
       const isAdmin = me.role === Role.ADMIN;
       const { inventoryIds, isPublic } = request.body;
 
-      const allowed = isAdmin
-        ? inventoryIds
-        : (await this.getOwnedInventoryIds(inventoryIds, me));
+      const allowed = isAdmin ? inventoryIds : await this.getOwnedInventoryIds(inventoryIds, me);
 
       const updated = await prisma.inventory.updateMany({
         where: { id: { in: allowed } },
@@ -305,7 +308,7 @@ export class InventoryController {
         updated: updated.count,
         updatedIds: allowed,
         skipped: inventoryIds.length - allowed.length,
-        skippedIds: inventoryIds.filter(id => !allowed.includes(id)),
+        skippedIds: inventoryIds.filter((id) => !allowed.includes(id)),
       });
     } catch (error) {
       return handleError(error, response);
@@ -324,12 +327,15 @@ export class InventoryController {
     return inventories.filter((inventory) => ownerSet.has(inventory.id));
   }
 
-  private static async getOwnedInventoryIds(inventoryIds: string[], me: Payload): Promise<string[]> {
+  private static async getOwnedInventoryIds(
+    inventoryIds: string[],
+    me: Payload,
+  ): Promise<string[]> {
     const owned = await prisma.inventory.findMany({
       where: { id: { in: inventoryIds }, ownerId: me.sub },
       select: { id: true },
     });
-    return owned.map(inventory => inventory.id);
+    return owned.map((inventory) => inventory.id);
   }
 
   private static filterDeletedSkippedIds(
@@ -536,7 +542,7 @@ export class InventoryController {
     const entries = Object.entries(patch) as Array<[WritableKey, WritableFields[WritableKey]]>;
     for (const [key, value] of entries) {
       if (isFieldKey(key)) {
-        if (key.endsWith('State') && typeof value === 'string') {
+        if (key.endsWith("State") && typeof value === "string") {
           const enumValue = FieldState[value as keyof typeof FieldState];
           if (enumValue !== undefined) {
             (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = enumValue as any;

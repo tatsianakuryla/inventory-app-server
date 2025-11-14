@@ -44,8 +44,7 @@ export class TokenController {
   }
 
   public static setAuthCookie(response: Response, token: string): void {
-    const maxAge =
-      typeof ACCESS_TTL === "string" ? ms(ACCESS_TTL) : ACCESS_TTL * 1000;
+    const maxAge = typeof ACCESS_TTL === "string" ? ms(ACCESS_TTL) : ACCESS_TTL * 1000;
 
     response.cookie(AUTH_COOKIE_NAME, token, {
       httpOnly: true,

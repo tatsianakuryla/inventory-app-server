@@ -10,7 +10,7 @@ export const EmailSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .pipe(z.email({ message: 'Invalid email' }));
+  .pipe(z.email({ message: "Invalid email" }));
 
 export const PasswordSchema = z
   .string()
@@ -57,9 +57,10 @@ export const UpdateProfileRequestSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .pipe(z.enum(['EN', 'RU'] as const))
+    .pipe(z.enum(["EN", "RU"] as const))
     .optional(),
-  theme: z.string()
+  theme: z
+    .string()
     .trim()
     .toUpperCase()
     .pipe(z.enum(["LIGHT", "DARK"] as const))
@@ -93,10 +94,10 @@ export const DeleteUsersBodySchema = z
 
 export type DeleteUsersBody = z.infer<typeof DeleteUsersBodySchema>;
 
-
 export const PayloadSchema = z.object({
   sub: IdSchema,
-  role: z.string()
+  role: z
+    .string()
     .trim()
     .toUpperCase()
     .pipe(z.enum(["USER", "ADMIN"] as const)),

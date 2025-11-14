@@ -16,7 +16,7 @@ import {
   isPrismaVersionConflictError,
 } from "../../shared/typeguards/typeguards.ts";
 import { CustomIdService } from "../../inventory/customIdService/customIdService.ts";
-import {ITEM_SELECTED, type ItemSelectedRow} from "../shared/constants/constants.ts";
+import { ITEM_SELECTED, type ItemSelectedRow } from "../shared/constants/constants.ts";
 
 export class ItemsController {
   public static getMany = async (request: Request, response: Response) => {
@@ -88,11 +88,17 @@ export class ItemsController {
               })
             : null;
           return { ...item, isLikedByCurrentUser: !!isLiked };
-        })
+        }),
       );
 
       const hasMore = skip + items.length < total;
-      return response.json({ items: itemsWithLikeStatus, total, page: finalPage, perPage: take, hasMore });
+      return response.json({
+        items: itemsWithLikeStatus,
+        total,
+        page: finalPage,
+        perPage: take,
+        hasMore,
+      });
     } catch (error) {
       return handleError(error, response);
     }
@@ -157,7 +163,10 @@ export class ItemsController {
           return response.status(201).json(created);
         } catch (error) {
           if (isError(error) && error.message.includes("exactly one SEQUENCE element")) {
-            return response.status(400).json({ message: "Cannot create item: Custom ID format must contain exactly one SEQUENCE element. Please configure the ID format in inventory settings." });
+            return response.status(400).json({
+              message:
+                "Cannot create item: Custom ID format must contain exactly one SEQUENCE element. Please configure the ID format in inventory settings.",
+            });
           }
           if (isPrismaUniqueError(error) && i < MAX_RETRIES - 1) continue;
           return handleError(error, response);
@@ -165,7 +174,10 @@ export class ItemsController {
       }
     } catch (error) {
       if (isError(error) && error.message.includes("exactly one SEQUENCE element")) {
-        return response.status(400).json({ message: "Cannot create item: Custom ID format must contain exactly one SEQUENCE element. Please configure the ID format in inventory settings." });
+        return response.status(400).json({
+          message:
+            "Cannot create item: Custom ID format must contain exactly one SEQUENCE element. Please configure the ID format in inventory settings.",
+        });
       }
       if (isPrismaUniqueError(error)) {
         return response.status(409).json({ message: "Duplicate customId in this inventory" });
@@ -185,7 +197,7 @@ export class ItemsController {
       const updated = await prisma.item.update({
         where: { id_version: { id: itemId, version } },
         data: {
-          ...(patch.customId !== undefined && { customId: patch.customId }), // <-- РАЗРЕШАЕМ
+          ...(patch.customId !== undefined && { customId: patch.customId }),
           ...(patch.text1 !== undefined && { text1: patch.text1 }),
           ...(patch.text2 !== undefined && { text2: patch.text2 }),
           ...(patch.text3 !== undefined && { text3: patch.text3 }),
@@ -224,12 +236,15 @@ export class ItemsController {
       const { items } = request.body as DeleteItemsBody;
       if (!items.length) {
         return response.json({
-          deleted: 0, deletedIds: [],
-          conflicts: 0, conflictIds: [],
-          skipped: 0, skippedIds: [],
+          deleted: 0,
+          deletedIds: [],
+          conflicts: 0,
+          conflictIds: [],
+          skipped: 0,
+          skippedIds: [],
         });
       }
-      const ids = items.map(i => i.id);
+      const ids = items.map((i) => i.id);
       const existingItems = await prisma.item.findMany({
         where: { id: { in: ids } },
         select: { id: true, inventoryId: true, version: true },
@@ -246,12 +261,14 @@ export class ItemsController {
       });
 
       const ops = candidates.map(({ id, version }) =>
-        prisma.item.deleteMany({ where: { id, version, inventoryId } })
+        prisma.item.deleteMany({ where: { id, version, inventoryId } }),
       );
       const results = ops.length ? await prisma.$transaction(ops) : [];
       const deletedIds: string[] = [];
       const conflictIds: string[] = [];
-      results.forEach((result, index) => (result.count === 1 ? deletedIds : conflictIds).push(candidates[index]!.id));
+      results.forEach((result, index) =>
+        (result.count === 1 ? deletedIds : conflictIds).push(candidates[index]!.id),
+      );
       return response.json({
         deleted: deletedIds.length,
         deletedIds,

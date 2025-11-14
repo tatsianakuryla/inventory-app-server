@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  IdSchema,
-  PaginationQuerySchema,
-  SortOrderSchema,
-} from "../../../shared/types/types.ts";
+import { IdSchema, PaginationQuerySchema, SortOrderSchema } from "../../../shared/types/types.ts";
 
 export const DiscussionIdParametersSchema = z.object({
   discussionId: IdSchema,

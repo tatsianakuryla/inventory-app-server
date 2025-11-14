@@ -9,7 +9,7 @@ import {
   PopularTagsQuerySchema,
   UpdateInventoryTagsSchema,
 } from "../shared/types/tags.schemas.ts";
-import {InventoryParametersSchema} from "../../inventory/shared/types/inventory.schemas.ts";
+import { InventoryParametersSchema } from "../../inventory/shared/types/inventory.schemas.ts";
 
 export const tagsRouter = Router();
 

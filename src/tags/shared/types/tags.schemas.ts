@@ -23,7 +23,7 @@ export const UpdateInventoryTagsSchema = z.object({
   tagNames: z
     .array(z.string().trim().min(1).max(50))
     .max(20, "Maximum 20 tags per inventory")
-    .refine((array) => new Set(array.map(tag => tag.toLowerCase())).size === array.length, {
+    .refine((array) => new Set(array.map((tag) => tag.toLowerCase())).size === array.length, {
       message: "Duplicate tag names are not allowed",
     }),
 });

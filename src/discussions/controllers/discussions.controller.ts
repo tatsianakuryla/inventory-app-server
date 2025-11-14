@@ -7,7 +7,7 @@ import type {
   DiscussionsQuery,
   DiscussionCreate,
 } from "../shared/types/discussions.schemas.ts";
-import type {InventoryParameters} from "../../inventory/shared/types/inventory.schemas.js";
+import type { InventoryParameters } from "../../inventory/shared/types/inventory.schemas.js";
 
 export class DiscussionsController {
   public static getMany = async (request: Request, response: Response) => {
