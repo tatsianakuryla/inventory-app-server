@@ -16,8 +16,6 @@ import {
   UpdateUserSchema,
   UpdateUsersRequestSchema,
   type UpdateUsersRequest,
-  DeleteUsersBodySchema,
-  type DeleteUsersBody,
   PayloadSchema,
   type Payload,
 } from "../../shared/types/users.schemas.ts";
@@ -29,9 +27,6 @@ export const RegisterRequestBodySchema = RegisterRequestSchema;
 
 export type LoginRequestBody = LoginRequest;
 export const LoginRequestBodySchema = LoginRequestSchema;
-
-export type IdsBody = DeleteUsersBody;
-export const IdsBodySchema = DeleteUsersBodySchema;
 
 export type UpdateUserProfile = z.infer<typeof UpdateUserSchema>;
 

@@ -83,16 +83,10 @@ export const UpdateUsersRequestSchema = z
 
 export type UpdateUsersRequest = z.infer<typeof UpdateUsersRequestSchema>;
 
-export const DeleteUsersBodySchema = z
-  .union([
-    IdSchema,
-    z.array(IdSchema).nonempty("At least one id is required").max(100, "Too many ids (max 100)"),
-  ])
-  .transform((value) => ({
-    ids: Array.from(new Set(Array.isArray(value) ? value : [value])),
-  }));
-
-export type DeleteUsersBody = z.infer<typeof DeleteUsersBodySchema>;
+export const IdsBodySchema = z.object({
+  ids: z.array(IdSchema).min(1).max(100),
+});
+export type IdsBody = z.infer<typeof IdsBodySchema>;
 
 export const PayloadSchema = z.object({
   sub: IdSchema,

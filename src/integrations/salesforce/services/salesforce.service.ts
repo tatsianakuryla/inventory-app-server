@@ -73,7 +73,7 @@ export class SalesforceService {
         try {
           await this.deleteSalesforceRecord(salesforceAccountUrl, accountId, salesforceAccessToken);
         } catch (rollbackError) {
-          console.error('Failed to rollback Salesforce Account:', rollbackError);
+          console.error("Failed to rollback Salesforce Account:", rollbackError);
         }
       }
       throw error;
@@ -135,7 +135,7 @@ export class SalesforceService {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
-        }
+        },
       });
       return response.data;
     } catch (error) {

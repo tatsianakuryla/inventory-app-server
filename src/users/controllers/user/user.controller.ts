@@ -12,7 +12,7 @@ import { Status, Role } from "@prisma/client";
 import { USER_SELECTED, SUPERADMINS } from "../../shared/constants/constants.ts";
 import { TokenController } from "../token/token.controller.ts";
 import { handleError, toAutocompleteOrderBy } from "../../shared/helpers/helpers.ts";
-import { Hash } from "../../security/Hash.ts";
+import { Hash } from "../../../shared/security/Hash.ts";
 import {
   isPrismaUniqueError,
   isPrismaVersionConflictError,
@@ -123,7 +123,7 @@ export class UserController {
           message: BACKEND_ERRORS.SOCIAL_ACCOUNT_NOT_LINKED,
         });
       }
-      const isPasswordValid = await Hash.verifyPassword(password, user.password);
+      const isPasswordValid = await Hash.verify(password, user.password);
       if (!isPasswordValid)
         return response.status(401).json({ message: BACKEND_ERRORS.INVALID_EMAIL_OR_PASSWORD });
       await this.promoteSuperAdmins(user);

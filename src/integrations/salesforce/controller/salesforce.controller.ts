@@ -21,7 +21,7 @@ export class SalesforceController {
       const { sub } = request.user;
       const { account, contact, userId } = request.body;
       const targetUserId = userId || sub;
-      
+
       const salesforceIntegrationId = await prisma.salesforceIntegration.findUnique({
         where: {
           userId: targetUserId,
@@ -35,7 +35,7 @@ export class SalesforceController {
           .status(409)
           .json({ message: "The account is already exists in Salesforce" });
       }
-      
+
       const result = await SalesforceService.createAccountWithContact(account, contact);
       if (result.accountId) {
         await prisma.salesforceIntegration.create({

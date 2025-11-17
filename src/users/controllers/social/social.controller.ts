@@ -11,7 +11,7 @@ import {
   PROVIDER_FIELD,
 } from "./social.types.ts";
 import { USER_SELECTED } from "../../shared/constants/constants.ts";
-import { Hash } from "../../security/Hash.ts";
+import { Hash } from "../../../shared/security/Hash.ts";
 import { SUPERADMINS } from "../../shared/constants/constants.ts";
 import { fbDebugUrl, fbProfileUrl } from "./social.constants.ts";
 import { BACKEND_ERRORS } from "../../../shared/constants/constants.ts";

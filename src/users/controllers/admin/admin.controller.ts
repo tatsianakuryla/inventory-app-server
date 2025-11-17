@@ -5,7 +5,6 @@ import { Prisma, Role, Status } from "@prisma/client";
 import { toRole, toStatus } from "../../shared/typeguards/typeguards.ts";
 import { SUPERADMINS, USER_SELECTED } from "../../shared/constants/constants.ts";
 import type {
-  IdsBody,
   UpdateUserProfile,
   UpdateUsersRequest,
   UpdateUsersResponse,
@@ -13,6 +12,7 @@ import type {
   UsersQuery,
   GetUsersResponse,
 } from "../types/controllers.types.ts";
+import type { IdsBody } from "../../shared/types/users.schemas.js";
 
 export class AdminUsersController {
   public static getUsers = async (
@@ -61,6 +61,28 @@ export class AdminUsersController {
           search: cleanSearch,
           hasMore,
         },
+      });
+    } catch (error) {
+      return handleError(error, response);
+    }
+  };
+
+  public static getUserById = async (request: Request<{ userId: string }>, response: Response) => {
+    try {
+      const { userId } = request.params;
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: USER_SELECTED,
+      });
+
+      if (!user) {
+        return response.status(404).json({ message: "User not found" });
+      }
+
+      return response.json({
+        ...user,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
       });
     } catch (error) {
       return handleError(error, response);
@@ -173,17 +195,33 @@ export class AdminUsersController {
       const { ids } = request.body;
       const currentUserId = request.user?.sub ?? "";
       const { allowedIds, preSkippedIds } = await this.filterProtectedUserIds(ids, currentUserId);
+      if (allowedIds.length === 0) {
+        return response.json({
+          deleted: 0,
+          skipped: preSkippedIds.length,
+          skippedIds: preSkippedIds,
+        });
+      }
+      const owners = await prisma.inventory.findMany({
+        where: { ownerId: { in: allowedIds } },
+        select: { ownerId: true },
+        distinct: ["ownerId"],
+      });
+      const ownerIdSet = new Set(owners.map((o) => o.ownerId));
+      const deletableIds = allowedIds.filter((id) => !ownerIdSet.has(id));
+      const skippedOwnerIds = allowedIds.filter((id) => ownerIdSet.has(id));
       let deleted = 0;
-      if (allowedIds.length > 0) {
+      if (deletableIds.length > 0) {
         const result = await prisma.user.deleteMany({
-          where: { id: { in: allowedIds } },
+          where: { id: { in: deletableIds } },
         });
         deleted = result.count;
       }
+      const skippedIds = Array.from(new Set([...preSkippedIds, ...skippedOwnerIds]));
       return response.json({
         deleted,
-        skipped: preSkippedIds.length,
-        skippedIds: preSkippedIds,
+        skipped: skippedIds.length,
+        skippedIds,
       });
     } catch (error) {
       return handleError(error, response);

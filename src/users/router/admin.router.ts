@@ -3,10 +3,10 @@ import { requireAuthAndNotBlocked } from "../../shared/middlewares/requireAuthAn
 import { requireAdmin } from "../../shared/middlewares/requireAdmin.ts";
 import { Validator } from "../../shared/middlewares/validator.ts";
 import {
+  IdsBodySchema,
   UpdateUsersRequestSchema,
   UsersQuerySchema,
-  IdsBodySchema,
-} from "../controllers/types/controllers.types.ts";
+} from "../shared/types/users.schemas.js";
 import { AdminUsersController } from "../controllers/admin/admin.controller.ts";
 
 export const adminRouter = express.Router();
@@ -18,6 +18,7 @@ adminRouter.get(
   Validator.requestQueryValidate(UsersQuerySchema),
   AdminUsersController.getUsers,
 );
+
 adminRouter.post(
   "/users/block",
   requireAuthAndNotBlocked,
@@ -56,4 +57,11 @@ adminRouter.delete(
   requireAdmin,
   Validator.requestBodyValidate(IdsBodySchema),
   AdminUsersController.remove,
+);
+
+adminRouter.get(
+  "/:userId",
+  requireAuthAndNotBlocked,
+  requireAdmin,
+  AdminUsersController.getUserById,
 );
