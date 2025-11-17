@@ -30,6 +30,7 @@ import {
 import { VERSION_CONFLICT_ERROR_MESSAGE } from "../../shared/constants/constants.ts";
 import { BACKEND_ERRORS } from "../../shared/constants/constants.ts";
 import { CustomIdService } from "../customIdService/customIdService.ts";
+import { AggregationService } from "../shared/services/aggregation.service.js";
 
 export class InventoryController {
   public static create = async (
@@ -156,7 +157,7 @@ export class InventoryController {
       const finalPage = Math.max(1, page);
       const skip = (finalPage - 1) * perPage;
 
-      let allItems: any[];
+      let allItems;
       if (userRole === Role.ADMIN) {
         const inventories = await prisma.inventory.findMany({
           select: {
@@ -545,7 +546,7 @@ export class InventoryController {
         if (key.endsWith("State") && typeof value === "string") {
           const enumValue = FieldState[value as keyof typeof FieldState];
           if (enumValue !== undefined) {
-            (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = enumValue as any;
+            (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = enumValue;
           }
         } else {
           (data as Record<WritableKey, WritableFields[WritableKey]>)[key] = value;
@@ -663,46 +664,9 @@ export class InventoryController {
           lastItemCreatedAt: null,
         });
       }
-      const numericStats: Record<
-        string,
-        { avg: number | null; min: number | null; max: number | null; count: number }
-      > = {};
 
-      for (const field of ["num1", "num2", "num3"] as const) {
-        const values = items.map((item) => item[field]).filter((value) => value !== null);
-        if (values.length > 0) {
-          const sum = values.reduce((acc, value) => acc + value, 0);
-          numericStats[field] = {
-            avg: sum / values.length,
-            min: Math.min(...values),
-            max: Math.max(...values),
-            count: values.length,
-          };
-        } else {
-          numericStats[field] = {
-            avg: null,
-            min: null,
-            max: null,
-            count: 0,
-          };
-        }
-      }
-      const textStats: Record<string, Array<{ value: string; count: number }>> = {};
-      for (const field of ["text1", "text2", "text3", "long1", "long2", "long3"] as const) {
-        const values = items.map((item) => item[field]).filter((value) => value !== null);
-        if (values.length > 0) {
-          const frequency: Record<string, number> = {};
-          values.forEach((val) => {
-            frequency[val] = (frequency[val] || 0) + 1;
-          });
-          textStats[field] = Object.entries(frequency)
-            .map(([value, count]) => ({ value, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 10);
-        } else {
-          textStats[field] = [];
-        }
-      }
+      const { numericStats, textStats } = AggregationService.calculateStatistics(items);
+
       const dates = items.map((item) => item.createdAt.getTime());
       const firstItemCreatedAt = new Date(Math.min(...dates)).toISOString();
       const lastItemCreatedAt = new Date(Math.max(...dates)).toISOString();

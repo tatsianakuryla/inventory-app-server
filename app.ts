@@ -15,6 +15,7 @@ import { tagsRouter } from "./src/tags/router/tags.router.ts";
 import { discussionsRouter } from "./src/discussions/router/discussions.router.ts";
 import { homeRouter } from "./src/home/router/home.router.ts";
 import { salesforceRouter } from "./src/integrations/salesforce/router/salesforse.router.ts";
+import { odooRouter } from "./src/integrations/odoo/router/odoo.router.js";
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ app.use("/api/tags", tagsRouter);
 app.use("/api/discussions", discussionsRouter);
 app.use("/api/home", homeRouter);
 app.use("/api/salesforce", salesforceRouter);
+app.use("/api/inventory/odoo", odooRouter);
 
 app.get("/api/health", (_request, response) => response.status(200).send("OK"));
 

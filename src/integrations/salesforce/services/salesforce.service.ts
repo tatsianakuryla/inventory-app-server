@@ -188,7 +188,7 @@ export class SalesforceService {
         const [firstError] = errorData as SalesforceErrorDetail[];
 
         const isDuplicateError =
-          firstError?.duplicateRule != null || firstError?.errorCode === SALESFORCE_DUPLICATION;
+          firstError?.duplicateRule !== null || firstError?.errorCode === SALESFORCE_DUPLICATION;
 
         if (isDuplicateError) {
           throw new Error(options.duplicateMessage);

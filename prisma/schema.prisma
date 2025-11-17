@@ -92,6 +92,7 @@ model Inventory {
   fields             InventoryFields?
   InventoryIdFormat  InventoryIdFormat?
   InventoryIdCounter InventoryIdCounter[]
+  odooToken          String?              @unique
 
   @@unique([id, version])
   @@index([ownerId])

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { EmailSchema } from "../../../users/shared/types/users.schemas.js";
-import { OptionalUrlSchema, IdSchema } from "../../../shared/types/types.js";
+import { OptionalUrlSchema } from "../../../shared/types/types.js";
 
 export const SalesforceTokenResponseSchema = z.object({
   access_token: z.string().min(1),
