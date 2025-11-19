@@ -9,6 +9,22 @@ import prisma from "../../../shared/db/db.js";
 import type { ResponseError } from "../../../shared/types/types.js";
 
 export class SalesforceController {
+  /**
+   * - Determines the target user:
+   *    - If `request.body.userId` is provided (admin), uses that user id.
+   *    - Otherwise, uses the currently authenticated user (`request.user.sub`).
+   * - Checks in the local database (Prisma) if this user is already linked
+   *   to a Salesforce account via the `salesforceIntegration` table.
+   *    - If a record exists, returns HTTP 409 with a message that the account
+   *      already exists in Salesforce.
+   * - If there is no existing integration:
+   *    - Calls `SalesforceService.createAccountWithContact(account, contact)` to create
+   *      an Account and a related Contact in Salesforce.
+   *    - On success, stores the `accountId` (and implicitly links it) in the
+   *      `salesforceIntegration` table for the target user.
+   *    - Returns the `{ accountId, contactId }` payload as JSON.
+   *
+   */
   public static createSalesforceAccountWithContact = async (
     request: Request<
       Record<string, never>,

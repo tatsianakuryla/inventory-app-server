@@ -1,3 +1,9 @@
+/**
+ * Simple in-memory cache for a Salesforce access token.
+ *
+ * The cache does not refresh the token by itself – it only tells callers
+ * whether the currently stored token can still be used or not.
+ */
 export class SalesforceTokenCache {
   private accessToken: string | undefined;
   private savedAt: Date | undefined;
@@ -9,7 +15,14 @@ export class SalesforceTokenCache {
     this.accessToken = accessToken;
     this.savedAt = new Date();
   }
-
+  /**
+   * Returns the cached access token if it is still considered valid.
+   *
+   * - If there is no token or no timestamp, returns `undefined`.
+   * - If the token lifetime has passed (with the safety margin),
+   *   clears the cache and returns `undefined`.
+   * - Otherwise, returns the cached token string.
+   */
   public getToken(): string | undefined {
     if (!this.accessToken || !this.savedAt) {
       return undefined;

@@ -11,6 +11,15 @@ import type { InventoryParameters } from "../../../inventory/shared/types/invent
 import { AggregationService } from "../../../inventory/shared/services/aggregation.service.js";
 
 export class OdooController {
+  /**
+   * Creates or returns an existing API token for a given inventory.
+   * 
+   * The token is stored in the inventory.odooToken field and can be used
+   * by external systems (e.g., Odoo) to fetch inventory data without
+   * authenticating as an application user.
+   * 
+   * Token generation: crypto.randomBytes(32) -> 64 hex characters
+   */
   public static createApiToken = async (
     request: Request<InventoryParameters>,
     response: Response<CreateApiTokenResponseBody>,
@@ -39,6 +48,17 @@ export class OdooController {
     }
   };
 
+  /**
+   * Returns aggregated inventory data based on an API token.
+   * 
+   * External systems call this endpoint with a token instead of user credentials.
+   * The token is mapped to an inventory, then:
+   *  - basic inventory info is returned (id, name, description)
+   *  - total number of items is calculated
+   *  - field-level aggregations are calculated using AggregationService
+   * 
+   * Key method: Uses AggregationService.calculateFieldAggregations()
+   */
   public static getInventoryData = async (
     _request: Request,
     response: Response<GetInventoryDataResponseBody>,

@@ -25,7 +25,15 @@ type SalesforceEntityType = "account" | "contact";
 
 export class SalesforceService {
   private static readonly tokenCache = new SalesforceTokenCache();
-
+  /**
+   * Creates a related Account + Contact pair in Salesforce.
+   *
+   * 1. Gets (or refreshes) an access token.
+   * 2. Creates an Account and stores its id.
+   * 3. Creates a Contact linked to this Account (via AccountId).
+   * 4. If Contact creation fails, tries to roll back by deleting the Account.
+   *
+   */
   public static async createAccountWithContact(
     accountBody: SalesforceAccountCreateRequest,
     contactBodyWithoutAccount: Omit<SalesforceContactCreateRequest, "AccountId">,
@@ -80,6 +88,13 @@ export class SalesforceService {
     }
   }
 
+  /**
+   * Returns a valid Salesforce access token.
+   *
+   * - First tries to read a token from the in-memory cache.
+   * - If there is no token (or it is considered expired), requests a new one
+   *   via `requestNewAccessToken` and stores it in the cache.
+   */
   private static async getToken(): Promise<string> {
     const cachedToken = this.tokenCache.getToken();
     if (cachedToken) {
@@ -88,6 +103,14 @@ export class SalesforceService {
     return await this.requestNewAccessToken();
   }
 
+  /**
+   * Requests a new access token from Salesforce using the Client Credentials flow.
+   *
+   * - Uses client id / client secret / token URL from environment variables.
+   * - Sends a x-www-form-urlencoded POST request to the Salesforce token endpoint.
+   * - On success, returns `access_token` and also stores it in the cache.
+   *
+   */
   private static async requestNewAccessToken(): Promise<string> {
     if (!salesforceConsumerKey || !salesforceConsumerSecret || !salesforceTokenUrl) {
       throw new Error("Salesforce credentials are not configured correctly");
@@ -120,7 +143,12 @@ export class SalesforceService {
       throw error;
     }
   }
-
+  /**
+   * Creates any Salesforce record (Account, Contact, etc.).
+   *
+   * - Sends a POST request with JSON body.
+   * - On success, returns normalized `SalesforceResponse`.
+   */
   private static async createSalesforceRecord<TRequestBody>(
     url: string,
     requestBody: TRequestBody,

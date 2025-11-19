@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { FieldAggregation } from "../../../inventory/shared/services/aggregation.service.js";
+import type { FieldAggregation } from "../../../inventory/shared/services/aggregation.types.js";
 
 export type CreateApiTokenResponseBody = { token: string } | { message: string };
 
